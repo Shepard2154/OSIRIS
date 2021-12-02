@@ -2,7 +2,7 @@
 var options = {
     series: [{
         name: "Количество",
-        data: [113, 87, 42, 12]
+        data: [4, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 13, 1, 1, 1, 1, 6, 1, 2, 1, 1, 3, 1, 1, 1, 5, 1, 1, 1, 2, 1, 1]
     }],
     noData: {
         text: 'Не найдено...'
@@ -42,7 +42,7 @@ var options = {
         }
     },
     xaxis: {
-        categories: ['@GodSaveAmerica', '@FuckinNigers', '@LoveRussia', '@RussianHackers'],
+        categories: ['SOULSaturday', 'TeamJoe', 'LGBTQ', 'WorldPressFreedomDay', 'TodosConBiden', 'VEDay', 'EqualityAct', 'League46', 'AB5', 'GunViolenceAwarenessDay', 'WorkersFirst', 'Juneteenth', 'DCStatehood', 'PrideMonth', 'ImmigrantHeritageMonth', 'NoBanAct', 'OpeningDay', 'CelebrationForChange', 'EidAlAdha', 'DemConvention', 'WomensEqualityDay', 'NationalDogDay', 'FabFive', 'RoshHashanah', 'BidenTownHall', 'NationalBlackVoterDay', 'NationalVoterRegistrationDay', 'OctoberVoter', 'WorldTeachersDay', 'ImVotingFor', 'IASen', 'NationalDessertDay', 'SpiritDay', 'VoteEarlyDay', 'OnlyTheYoung', 'BidenForFL', 'RockinEve', 'Inauguration2021', 'LunarNewYear', 'InternationalWomensDay'],
         labels: {
             show: false
         }

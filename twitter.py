@@ -1,4 +1,5 @@
 import nest_asyncio
+from io import StringIO
 import time
 import sqlite3
 import pandas as pd
@@ -14,6 +15,7 @@ import en_core_web_sm
 import tweepy
 import storage
 import calendar
+import getters
 
 
 DATABASE = "./data/osiris.db"
@@ -161,51 +163,68 @@ def followersCross(ListInfluencersName, cross_count=1):
 
 
 def followersCrossNames(ids, cross_count=1):
-    start_time = time.time()
+    # start_time = time.time()
 
+    # followers = []
+    # common_followers_id = storage.read_common_followers(ids, cross_count)
+    # if len(common_followers_id) == 0:
+    #     return ({'status_code': 404})
+
+    # count = 0
+
+    # for i in range(0, len(common_followers_id)):
+    #     count += 1
+        
+    #     follower = None
+    #     try:
+    #         follower = api.get_user(user_id=common_followers_id[i][0])
+    #     except tweepy.errors.TooManyRequests as e1:
+    #         print(e1)
+    #         time.sleep(60*15)
+    #         follower = api.get_user(user_id=common_followers_id[i][0])
+    #     except tweepy.errors.NotFound as e2:
+    #         print(e2, common_followers_id[i][0])
+    #     except tweepy.errors.TweepyException as e3:
+    #         print(e3)
+    #     except tweepy.errors.Forbidden as e4:
+    #         print(e4)
+        
+
+    #     if follower:
+    #         follower_info = {
+    #             'name': follower.name,
+    #             'screen_name': follower.screen_name,
+    #             'statuses_count': follower.statuses_count,
+    #             'friends_count': follower.friends_count,
+    #             'followers_count': follower.followers_count,
+    #             'favourites_count': follower.favourites_count,
+    #             'listed_count': follower.listed_count,
+    #             'profile_image_url': follower.profile_image_url,
+    #             'description': follower.description
+    #         }
+    #         storage.create_follower_user(follower_info)
+    #         followers.append(follower_info.get('screen_name'))
+
+    #     print(f"{count}/{len(common_followers_id)}")
+        
+    # print(f"--- {time.time() - start_time} seconds ---")
+    all_followers = storage.read_all_followers()
     followers = []
-    common_followers_id = storage.read_common_followers(ids, cross_count)
-    if len(common_followers_id) == 0:
-        return ({'status_code': 404})
-
-    count = 0
-
-    for i in range(len(common_followers_id)):
-        count += 1
-        
-        follower = None
-        try:
-            follower = api.get_user(user_id=common_followers_id[i][0])
-        except tweepy.errors.TooManyRequests as e1:
-            print(e1)
-            time.sleep(60*15)
-            follower = api.get_user(user_id=common_followers_id[i][0])
-        except tweepy.errors.NotFound as e2:
-            print(e2, common_followers_id[i][0])
-        except tweepy.errors.TweepyException as e3:
-            print(e3)
-        except tweepy.errors.Forbidden as e4:
-            print(e4)
-        
-
-        if follower:
-            follower_info = {
-                'name': follower.name,
-                'screen_name': follower.screen_name,
-                'statuses_count': follower.statuses_count,
-                'friends_count': follower.friends_count,
-                'followers_count': follower.followers_count,
-                'favourites_count': follower.favourites_count,
-                'listed_count': follower.listed_count,
-                'profile_image_url': follower.profile_image_url,
-                'description': follower.description
+    for i in range(len(all_followers)):
+        followers.append(
+            {
+                'screen_name': all_followers[i][0],
+                'name': all_followers[i][1],
+                'profile_image_url': all_followers[i][2],
+                'statuses_count': all_followers[i][3],
+                'friends_count': all_followers[i][4],
+                'followers_count': all_followers[i][5],
+                'favourites_count': all_followers[i][6],
+                'listed_count': all_followers[i][7],
+                'description': all_followers[i][8] 
             }
-            storage.create_follower_user(follower_info)
-            followers.append(follower_info.get('screen_name'))
+        )
 
-        print(f"{count}/{len(common_followers_id)}")
-        
-    print(f"--- {time.time() - start_time} seconds ---")
     return({'followersCrossNames': followers, 'status_code': 200})
 
 
@@ -292,22 +311,37 @@ def get_followers(api, users, ListInfluencersName):
 
 
 def getFollowerInfoDB(screen_name):
-    data = storage.read_follower(screen_name)
-    if len(data) == 0:
-        return ({"status_code": 404})
+    # data = storage.read_follower(screen_name)
+    # data = storage.read_all_followers()
+    # if len(data) == 0:
+    #     return ({"status_code": 404})
 
-    user_data = [item for item in data[0]]
-    influencer = {
-        'username': user_data[0], 
-        'name': user_data[1], 
-        'profile_image_url': user_data[2], 
-        'tweets': user_data[3], 
-        'following': user_data[4], 
-        'followers': user_data[5],
-        'likes': user_data[6],
-        'media': user_data[7],
-        'description': user_data[8]
-        }
+    # user_data = [item for item in data]
+    # influencer = {
+    #     'username': user_data[0], 
+    #     'name': user_data[1], 
+    #     'profile_image_url': user_data[2], 
+    #     'tweets': user_data[3], 
+    #     'following': user_data[4], 
+    #     'followers': user_data[5],
+    #     'likes': user_data[6],
+    #     'media': user_data[7],
+    #     'description': user_data[8]
+    #     }
+    all_followers = storage.read_all_followers()
+    for i in range(len(all_followers)):
+        influencer = {
+                'username': all_followers[i][0],
+                'name': all_followers[i][1],
+                'profile_image_url': all_followers[i][2],
+                'tweets': all_followers[i][3],
+                'following': all_followers[i][4],
+                'followers': all_followers[i][5],
+                'likes': all_followers[i][6],
+                'media': all_followers[i][7],
+                'description': all_followers[i][8] 
+            }
+
     
     return({"Influencer": influencer, "status_code": 200})
 
@@ -673,39 +707,130 @@ def get_tweet_retweet_screen_name(screen_name):
         return({"retweet_screen_names": "", "retweet_screen_name_count": 0, "status_code": 200})
 
 
-# getGeofenceTwits
 # def getGeofenceTwits(center,radius):
-    start_time = time.time()
-    #for username in users:
-    try:
-        loop = nest_asyncio.asyncio.new_event_loop()
-        nest_asyncio.asyncio.set_event_loop(loop)
-        nest_asyncio.apply()
-        twint.output.clean_lists()
-        # nest_asyncio.apply()
-        c_geo = twint.Config()
-        print(type(center))
-        center = center.replace("(","").replace(")","")
-        c_geo.Geo = f"{center}, {radius}km"
-        print(c_geo.Geo)
-        c_geo.Limit = 20
-        # c_geo.Store_object = True
-        c_geo.Hide_output = False
-        c_geo.Pandas = True
-        c_geo.Lang = "en"
-        c_geo.Translate = True
-        c_geo.TranslateDest = "ru"
-        c_geo.Pandas_clean = True  
-        twint.run.Search(c_geo)
-        Tweets_df = twint.storage.panda.Tweets_df
-        twits = Tweets_df.T.to_dict()
-        print("--- %s seconds ---" % (time.time() - start_time))
-    except:
-        return ({"status_code":400})
+#     start_time = time.time()
+#     for username in users:
+#         try:
+#             loop = nest_asyncio.asyncio.new_event_loop()
+#             nest_asyncio.asyncio.set_event_loop(loop)
+#             nest_asyncio.apply()
+#             twint.output.clean_lists()
+#             c_geo = twint.Config()
+#             print(type(center))
+#             center = center.replace("(","").replace(")","")
+#             c_geo.Geo = f"{center}, {radius}km"
+#             print(c_geo.Geo)
+#             c_geo.Limit = 20
+#             c_geo.Hide_output = False
+#             c_geo.Pandas = True
+#             c_geo.Lang = "en"
+#             c_geo.Translate = True
+#             c_geo.TranslateDest = "ru"
+#             c_geo.Pandas_clean = True  
+#             twint.run.Search(c_geo)
+#             Tweets_df = twint.storage.panda.Tweets_df
+#             twits = Tweets_df.T.to_dict()
+#             print("--- %s seconds ---" % (time.time() - start_time))
+#         except:
+#             return ({"status_code":400})
     
+#     return ({"status_code":200,"twits":twits})
+
+
+def getGeofenceTwits(center=None, radius=None, keyword='*'):
+    geo='50.136353,11.575004,25km'
+    COLS = ['id', 'username', 'text', 'date', 'link', 'translate', 'nlikes', 'place', 'nretweets', 'nreplies','retweet', 'hashtags', 'name']
+
+    df = pd.DataFrame(columns=COLS)
+    twits = []
+
+    for page in tweepy.Cursor(api.search_tweets, q=keyword,geocode=geo).pages():
+        for tweet in page:
+            new_entry = []
+            tweet = tweet._json
+            print(tweet)    
+            new_entry += [
+                tweet['id'], 
+                tweet['user']['screen_name'],
+                tweet['lang'], 
+                tweet['created_at'], 
+                f"https://twitter.com/{tweet['user']['screen_name']}", 
+                tweet['text'],
+                tweet['favorite_count'] 
+            ]
+
+            #check if place name is available, in case not the entry is named 'no place'
+            try:
+                place = tweet['place']['name']
+            except TypeError:
+                place = 'no place'
+            new_entry.append(place)
+
+            new_entry.append('600')
+            new_entry.append('600')
+
+            # try:
+            #     place_type = tweet['place']['place_type']
+            # except TypeError:
+            #     place_type = 'na'
+            # new_entry.append(place_type)
+
+            # try:
+            #     bbx = tweet['place']['bounding_box']['coordinates']
+            # except TypeError:
+            #     bbx = 'na'
+            # new_entry.append(bbx)
+
+            #check if coordinates is available, in case not the entry is named 'no coordinates'
+            # try:
+            #     coord = tweet['coordinates']['coordinates']
+            # except TypeError:
+            #     coord = 'no coordinates'
+            # new_entry.append(coord)
+
+            retweete_screen_name = ""
+            try:
+                retweete_screen_name = tweet.retweeted_status.user.screen_name
+                new_entry.append(retweete_screen_name)
+            except Exception as e:
+                new_entry.append('no')
+            
+            hashtags = getters.get_hashtags2(tweet)
+            new_entry.append(hashtags.split())
+
+            new_entry.append(tweet['user']['name'])
+
+            print([new_entry], COLS)
+            single_tweet_df = pd.DataFrame([new_entry], columns=COLS)
+            df = df.append(single_tweet_df, ignore_index=True)
+            print(df)
+
+            twits.append({
+                "username": new_entry[1],
+                'text': new_entry[2], 
+                'date': new_entry[3], 
+                'link': new_entry[4], 
+                'translate': new_entry[5], 
+                'nlikes': new_entry[6], 
+                'place': new_entry[7], 
+                'nretweets': new_entry[8], 
+                'nreplies': new_entry[9],
+                'retweet': new_entry[10], 
+                'hashtags': new_entry[11],
+                'name': tweet['user']['name']
+            }) 
+            if len(df) == 100:
+                break
+
+        if len(df) == 100:
+                break
+
+    for i in twits:
+        print(i)
     return ({"status_code":200,"twits":twits})
 
-# def newGetTwitsEntity(users,stat_twit_count):
+
+def newGetTwitsEntity(users, stat_twit_count):
     start_time = time.time()
     texts = ""
     loop = nest_asyncio.asyncio.new_event_loop()
@@ -713,21 +838,16 @@ def get_tweet_retweet_screen_name(screen_name):
     nest_asyncio.apply()
     print(stat_twit_count)
     for username in users:
-        twint.output.clean_lists()
-        c = twint.Config()
-        c.Username = username
-        # c.Database = "tweets.db"
-        c.Pandas = True
-        c.Pandas_clean = True
-        c.Limit = stat_twit_count
-        # c.Translate = True
-        # c.TranslateDest = "en"
-        twint.run.Search(c)
-        Tweets_df = twint.storage.panda.Tweets_df
-        if len(Tweets_df) > 0:
-            texts = texts + "\n".join(list(Tweets_df['tweet']))
+        current_tweets = []
+        username_tweets = storage.read_tweet_text(username)
+        for tweet in username_tweets:
+            current_tweets.append(tweet[0])
+        if len(current_tweets):    
+            texts = texts + "\n".join(current_tweets)
     print("--- %s seconds ---" % (time.time() - start_time))
     return(getAllEntity(texts))
+
+
 
 def getAllEntity(texts):
     texts = deEmojify(texts)
@@ -738,7 +858,6 @@ def getAllEntity(texts):
         if (i != 'TIME') and (i != 'DATE') and (i != 'MONEY') and (i != "ORDINAL") and (i != "CARDINAL") and (i != "QUANTITY") and (i != "PERCENT") and (i != "LANGUAGE"):
             mean = all_entities.get(ent.text)
             if mean is not None:
-    #             print('not none')
                 m_count = mean['count']
                 m_sentences = mean['sentences']
                 m_sentences_pos = mean['sentences_pos']
@@ -749,7 +868,6 @@ def getAllEntity(texts):
                 m_tone_neutral = mean['tone_neutral']
                 m_type = mean['type']
             else:
-    #             print('none')
                 m_count = 0
                 m_sentences = []
                 m_sentences_pos = []
@@ -773,8 +891,13 @@ def getAllEntity(texts):
                     "type":m_type
                 }
             })
-    table_data = pd.read_json(json.dumps(all_entities)).T
-    table = table_data.sort_values('count',ascending=False)
+
+    all_entities_json = json.dumps(all_entities)
+    
+    table_data = pd.read_json(StringIO(all_entities_json)).T
+    print(table_data.head())
+    table = table_data.sort_values(by='count', ascending=False)
+
     for i in range(len(table)):
         sent_pos = []
         sent_neg = []
@@ -800,7 +923,6 @@ def getAllEntity(texts):
         table.iloc[i]['sentences_pos'] = sent_pos       
         table.iloc[i]['sentences_neg'] = sent_neg       
         table.iloc[i]['sentences_neutral'] = sent_neutral
-#     tab = table[:50]
     table = table.sort_values('tone_pos',ascending=False)
     tone_pos = list(table['tone_pos'][:20])
     names_pos = list(table.index[:20])
@@ -815,7 +937,7 @@ def getAllEntity(texts):
     tone_neutral = list(table['tone_neutral'][:20])
     names_neutral = list(table.index[:20])
     sentences_neutral = list(table['sentences_neutral'][:20])
-#     return({"names":list(tab.index),"tone_pos":list(tab['tone_pos']),"tone_neutral":list(tab['tone_neutral']),"tone_neg":list(tab['tone_neg'])})
+
     out = {
         "tone_pos":tone_pos,
         "names_pos":names_pos,
@@ -829,6 +951,7 @@ def getAllEntity(texts):
         "names_neutral":names_neutral,
         "sentences_neutral":sentences_neutral
     }
+
     names_sent_pos = {}
     for i in range(len(out['names_pos'])):
         names_sent_pos.update({out['names_pos'][i]:out['sentences_pos'][i]})
@@ -844,6 +967,7 @@ def getAllEntity(texts):
     out.update({"names_sent_pos":names_sent_pos,"names_sent_neg":names_sent_neg,"names_sent_neutral":names_sent_neutral})
 
     return(rebuildOutput(out))
+
 
 def rebuildOutput(out):
     out_pos = []
@@ -865,6 +989,7 @@ def rebuildOutput(out):
         else:
             break
     return({"out_pos":out_pos,"out_neg":out_neg,"out_neutral":out_neutral,"out":out})
+
 
 def deEmojify(inputString):
     returnString = ""

@@ -2,7 +2,7 @@
 var options = {
     series: [{
         name: "Количество",
-        data: []//[1380, 1222, 623, 581, 223]
+        data: [42008246, 239, 3250]
     }],
     noData: {
         text: 'Не найдено...'
@@ -42,7 +42,7 @@ var options = {
         }
     },
     xaxis: {
-        categories: ['Reply', 'Retweet', 'Self-Reply', 'Quote', 'Tweet'],
+        categories: ['Ретвиты', 'Цитаты', 'Ответы'],
         labels: {
             show: false
         }

@@ -19,7 +19,7 @@ addCAuserOnBoard = function (person) {
                               noreferrer" target="_blank">
                               <h2 id="acc_username" class="font-medium text-lg
                                 text-gray-500
-                                hover:text-brand acc_username">@${person['screen_name']}</h2>
+                                hover:text-brand acc_username">@${person['username']}</h2>
                             </a></div>
                             <div class="flex flex-col mr-3 mb-2" aria-describedby="tooltip:8" data-reach-tooltip-trigger=""><a class="text-brand font-semibold 
                               hover:text-brand-dark" rel="noopener noreferrer" target="_blank"></a><span class="text-gray-500

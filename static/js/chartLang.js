@@ -2,7 +2,7 @@
 var options = {
     series: [{
         name: "Количество",
-        data: [1323, 122, 223, 81]
+        data: [3216, 21, 9, 2, 1, 1]
     }],
     noData: {
         text: 'Не найдено...'
@@ -42,7 +42,7 @@ var options = {
         }
     },
     xaxis: {
-        categories: ['English', 'Undefined', 'German', 'Danish'],
+        categories: ['en', 'es', 'und', 'fr', 'pt', 'tr'],
         labels: {
             show: false
         }

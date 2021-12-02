@@ -2,7 +2,7 @@
 var options = {
     series: [{
         name: "Количество",
-        data: [52, 23, 13]
+        data: [2003, 52, 38, 23, 12, 11, 6]
     }],
     noData: {
         text: 'Не найдено...'
@@ -42,7 +42,7 @@ var options = {
         }
     },
     xaxis: {
-        categories: ['youtube.com', 'bit.ly', 'facebook.com'],
+        categories: ['twitter.com', 'iwillvote.com;', 'www.pscp.tv', 'iwillvote.com', 'joe.link', 'IWillVote.com;', 'JoeBiden.com'],
         labels: {
             show: false
         }

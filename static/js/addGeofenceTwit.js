@@ -1,21 +1,4 @@
 addGeofenceTwit = function (person) {
-  // const person = {
-  //     username: 'KremlinRussia',
-  //     name: 'Джефф Монсон',
-  //     avatar: 'https://randomuser.me/api/portraits/men/90.jpg',
-  //     tweets: '444',
-  //     following:"111",
-  //     followers:"222",
-  //     likes:'333',
-  //     media:'123',
-  //     bio:'Этот человек очень много сделал'
-  // }
-  // alert(JSON.stringify(person))
-  // And then create our markup:
-  // <img id="acc_image" alt="@${person['name']}'s Profile
-  // Picture" class="rounded-lg mr-4 h-12 w-h-12"
-  // src="https://pbs.twimg.com/profile_images/845337586436624384/YgCjFUJ6_400x400.jpg"
-  // title="@${person['name']}'s Profile Picture">
 
   bg_color = "bg-teal-600"
   place = person['place']

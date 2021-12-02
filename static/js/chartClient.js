@@ -2,7 +2,7 @@
 var options = {
     series: [{
         name: "Количество",
-        data: [2180, 822, 23]
+        data: [1216, 792, 741, 248, 133, 120]
     }],
     noData: {
         text: 'Не найдено...'
@@ -42,7 +42,7 @@ var options = {
         }
     },
     xaxis: {
-        categories: ['Twitter for Android', 'Twitter Web App', 'Twitter Web Client'],
+        categories: ['TweetDeck', 'Twitter Web App', 'Twitter Media Studio', 'Sprout Social', 'Periscope', 'Twitter for iPhone'],
         labels: {
             show: false
         }

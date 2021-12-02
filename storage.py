@@ -186,7 +186,7 @@ def create_follower_user(follower_user):
         INSERT OR REPLACE INTO follower_user 
         VALUES (
             "{follower_user.get('screen_name')}",
-            "{follower_user.get('name')}",
+            "{follower_user.get('name').replace('"', "'")}",
             '{follower_user.get('profile_image_url')}',
             {follower_user.get('statuses_count')},
             {follower_user.get('friends_count')},
@@ -196,6 +196,7 @@ def create_follower_user(follower_user):
             "{follower_user.get('description').replace('"', "'")}"           
         )
     """
+    print(query)
     cursor.execute(query)
     connection.commit()
     
@@ -230,6 +231,18 @@ def read_follower(screen_name):
     connection.commit()
     return data
 
+
+def read_all_followers():
+    connection = sqlite3.connect(DATABASE)
+    cursor = connection.cursor()
+    query = f'''
+        SELECT screen_name, name, profile_image_url, statuses_count, friends_count, followers_count, favourites_count, listed_count, description 
+        FROM follower_user
+    '''
+    cursor.execute(query)
+    data = cursor.fetchall()
+    connection.commit()
+    return data
 
 # Вот эту функцию нужно конкретно тестировать
 def create_tweet(tweet, quote_screen_name='', retweete_screen_name=''):
@@ -500,6 +513,20 @@ def read_common_followers(ids: list, cross_count: int):
             GROUP BY follower_id
         )
         WHERE quontity >= {cross_count}
+    '''
+    cursor.execute(query)
+    data = cursor.fetchall()
+    connection.commit()
+    return data
+
+
+def read_tweet_text(screen_name):
+    connection = sqlite3.connect(DATABASE)
+    cursor = connection.cursor()
+    query = f'''
+        SELECT text
+        FROM tweet
+        WHERE screen_name = "{screen_name}"
     '''
     cursor.execute(query)
     data = cursor.fetchall()

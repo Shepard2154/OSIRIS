@@ -17,6 +17,14 @@ def get_hashtags(tweet):
     return result
 
 
+def get_hashtags2(tweet):
+    result = ''
+    hashtags = tweet.get('entities').get('hashtags')
+    for hashtag in hashtags:
+        result += hashtag.get('text') + ' '
+    return result
+
+
 def get_urls(tweet):
     result = ''
     urls = tweet.entities.get('urls')

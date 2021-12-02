@@ -14,14 +14,11 @@ addDopMessage = function () {
                 if (sizze > 0) {
                     for (var i = 0; i < sizze; i++) {
                         addMessageOnBoard(msg.TwitsToBoard[i]);
-                  // alert('oke__________ke')
                     }
                     $('#untilTwitsToBoard').val(msg.TwitsToBoard[sizze-1]['created_at'])
                 }
             },
             error: function(msg) {
-                // $("#login").attr("style","color:red")
-                // $("#password").attr("style","color:red")
                 alert('bad request')
             },
             beforeSend: function(){

@@ -2,7 +2,7 @@
 var options = {
     series: [{
         name: "Количество",
-        data: [13, 6]
+        data: [1, 1, 3, 1, 1, 1, 6]
     }],
     noData: {
         text: ''
@@ -42,7 +42,7 @@ var options = {
         }
     },
     xaxis: {
-        categories: ['@professor', '@KremlinRussia'],
+        categories: ['truth', 'stevenmnuchin1', 'staceyabrams', 'Lawrence', 'springsteen', 'JoeBiden', 'realDonaldTrump'],
         labels: {
             show: false
         }
