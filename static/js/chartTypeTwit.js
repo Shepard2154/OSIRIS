@@ -42,7 +42,7 @@ var options = {
         }
     },
     xaxis: {
-        categories: ['Ретвиты', 'Цитаты', 'Ответы'],
+        categories: ['Ретвиты', 'Цитаты', 'Твиты/Ответы'],
         labels: {
             show: false
         }

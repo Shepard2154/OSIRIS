@@ -1,11 +1,11 @@
 import datetime
 import sqlite3
-from config import DATABASE
+
 import getters
+from config import TWITTER_DB
 
-
-def init(DATABASE):
-    connection = sqlite3.connect(DATABASE)
+def init():
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = """
         CREATE TABLE IF NOT EXISTS
@@ -65,45 +65,6 @@ def init(DATABASE):
     """
     cursor.execute(query)
 
-    # table_retweets = """
-    #     CREATE TABLE IF NOT EXISTS
-    #         retweets(
-    #             user_id integer not null,
-    #             username text not null,
-    #             tweet_id integer not null,
-    #             retweet_id integer not null,
-    #             retweet_date integer,
-    #             CONSTRAINT retweets_pk PRIMARY KEY(user_id, tweet_id),
-    #             CONSTRAINT user_id_fk FOREIGN KEY(user_id) REFERENCES users(id),
-    #             CONSTRAINT tweet_id_fk FOREIGN KEY(tweet_id) REFERENCES tweets(id)
-    #         );
-    # """
-    # cursor.execute(table_retweets)
-
-    # table_reply_to = """
-    #     CREATE TABLE IF NOT EXISTS
-    #         replies(
-    #             tweet_id integer not null,
-    #             user_id integer not null,
-    #             username text not null,
-    #             CONSTRAINT replies_pk PRIMARY KEY (user_id, tweet_id),
-    #             CONSTRAINT tweet_id_fk FOREIGN KEY (tweet_id) REFERENCES tweets(id)
-    #         );
-    # """
-    # cursor.execute(table_reply_to)
-
-    # table_favorites =  """
-    #     CREATE TABLE IF NOT EXISTS
-    #         favorites(
-    #             user_id integer not null,
-    #             tweet_id integer not null,
-    #             CONSTRAINT favorites_pk PRIMARY KEY (user_id, tweet_id),
-    #             CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users(id),
-    #             CONSTRAINT tweet_id_fk FOREIGN KEY (tweet_id) REFERENCES tweets(id)
-    #         );
-    # """
-    # cursor.execute(table_favorites)
-
     query = """
         CREATE TABLE IF NOT EXISTS
             follower (
@@ -115,19 +76,6 @@ def init(DATABASE):
             );
     """
     cursor.execute(query)
-
-    # table_following = """
-    #     CREATE TABLE IF NOT EXISTS
-    #         following (
-    #             id integer not null,
-    #             following_id integer not null,
-    #             CONSTRAINT following_pk PRIMARY KEY (id, following_id),
-    #             CONSTRAINT id_fk FOREIGN KEY(id) REFERENCES users(id),
-    #             CONSTRAINT following_id_fk FOREIGN KEY(following_id) REFERENCES users(id)
-    #         );
-    # """
-    # cursor.execute(table_following)
-
 
     query = """
         CREATE TABLE IF NOT EXISTS
@@ -150,7 +98,7 @@ def init(DATABASE):
 
 
 def create_user(user):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f"""
         INSERT OR REPLACE INTO user 
@@ -180,7 +128,7 @@ def create_user(user):
 
 
 def create_follower_user(follower_user):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f"""
         INSERT OR REPLACE INTO follower_user 
@@ -203,14 +151,12 @@ def create_follower_user(follower_user):
 
 
 def read_user(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT screen_name, name, profile_image_url, statuses_count, friends_count, followers_count, favourites_count, listed_count, description 
         FROM user 
         WHERE screen_name == "{screen_name}"
-        ORDER BY time_update 
-        DESC
     '''
     cursor.execute(query)
     data = cursor.fetchall()
@@ -219,7 +165,7 @@ def read_user(screen_name):
 
 
 def read_follower(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT screen_name, name, profile_image_url, statuses_count, friends_count, followers_count, favourites_count, listed_count, description 
@@ -233,7 +179,7 @@ def read_follower(screen_name):
 
 
 def read_all_followers():
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT screen_name, name, profile_image_url, statuses_count, friends_count, followers_count, favourites_count, listed_count, description 
@@ -246,9 +192,8 @@ def read_all_followers():
 
 # Вот эту функцию нужно конкретно тестировать
 def create_tweet(tweet, quote_screen_name='', retweete_screen_name=''):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
-
     try:
         place = tweet.place.url
         coordinates = tweet.coordinates.get('coordinates')
@@ -257,10 +202,10 @@ def create_tweet(tweet, quote_screen_name='', retweete_screen_name=''):
         coordinates = ''
 
     query = f"""
-            INSERT INTO tweet 
+            INSERT or REPLACE INTO tweet 
             VALUES (
                 {tweet.id},
-                "{tweet.text.replace('"','')}",
+                "{tweet.full_text.replace('"', '')}",
                 {tweet.truncated},
                 '{tweet.created_at}',
                 '{tweet.lang}',
@@ -273,7 +218,7 @@ def create_tweet(tweet, quote_screen_name='', retweete_screen_name=''):
                 "{coordinates}",
                 {tweet.user.id},
                 '{tweet.user.screen_name}',
-                '{tweet.user.name}',
+                "{tweet.user.name.replace('"', '')}",
                 '{tweet.source}',
                 '{tweet.in_reply_to_status_id}',
                 '{tweet.in_reply_to_user_id}' ,
@@ -285,12 +230,13 @@ def create_tweet(tweet, quote_screen_name='', retweete_screen_name=''):
                 '{retweete_screen_name}'
             )
         """
+    print(query)
     cursor.execute(query)
     connection.commit()
 
 
 def read_last_tweet(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f"""
     SELECT MAX(id) FROM tweet WHERE screen_name='{screen_name.replace('@', '')}'
@@ -302,7 +248,7 @@ def read_last_tweet(screen_name):
 
 
 def read_tweets(screen_name, created_at=datetime.datetime.now()):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f"""
         SELECT text, created_at, screen_name, name, id 
@@ -319,7 +265,7 @@ def read_tweets(screen_name, created_at=datetime.datetime.now()):
 
 
 def read_tweets_urls(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f"""
         SELECT urls 
@@ -333,7 +279,7 @@ def read_tweets_urls(screen_name):
 
 
 def read_tweets_created_at(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT created_at 
@@ -346,7 +292,7 @@ def read_tweets_created_at(screen_name):
 
 
 def read_tweets_lang(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT lang
@@ -360,7 +306,7 @@ def read_tweets_lang(screen_name):
 
 
 def read_tweets_source(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT source
@@ -374,7 +320,7 @@ def read_tweets_source(screen_name):
 
 
 def read_tweets_hashtags(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT hashtags
@@ -388,15 +334,12 @@ def read_tweets_hashtags(screen_name):
 
 
 def read_tweets_user_mentions(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT user_mentions
         FROM tweet
         WHERE (screen_name == "{screen_name}") 
-        ORDER BY user_mentions 
-        DESC
-        LIMIT 12
     '''
     cursor.execute(query)
     data = cursor.fetchall()
@@ -405,7 +348,7 @@ def read_tweets_user_mentions(screen_name):
 
 
 def read_tweets_type(screen_name, type):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
     SELECT {type}  
@@ -419,7 +362,7 @@ def read_tweets_type(screen_name, type):
 
 
 def read_tweet_count(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
     SELECT COUNT(*)
@@ -433,15 +376,12 @@ def read_tweet_count(screen_name):
 
 
 def read_tweet_quote_screen_name(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
     SELECT quote_screen_name
     FROM tweet
     WHERE screen_name='{screen_name}'
-    ORDER BY quote_screen_name 
-    DESC
-    LIMIT 12
     '''
     cursor.execute(query)
     data = cursor.fetchall()
@@ -450,16 +390,13 @@ def read_tweet_quote_screen_name(screen_name):
 
 
 def read_tweet_retweete_screen_name(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
     SELECT retweete_screen_name
     FROM tweet
     WHERE (retweete_screen_name != '') AND
     (screen_name='{screen_name}')
-    ORDER BY retweete_screen_name 
-    DESC
-    LIMIT 12
     '''
     cursor.execute(query)
     data = cursor.fetchall()
@@ -468,7 +405,7 @@ def read_tweet_retweete_screen_name(screen_name):
         
 
 def create_follower_name(screen_name, follower_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
 
     time_update = datetime.datetime.now()
@@ -487,7 +424,7 @@ def create_follower_name(screen_name, follower_name):
 
 
 def create_follower(user_id, follower_id):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
 
     query = f'''
@@ -502,7 +439,7 @@ def create_follower(user_id, follower_id):
 
 
 def read_common_followers(ids: list, cross_count: int):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT follower_id
@@ -521,10 +458,23 @@ def read_common_followers(ids: list, cross_count: int):
 
 
 def read_tweet_text(screen_name):
-    connection = sqlite3.connect(DATABASE)
+    connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f'''
         SELECT text
+        FROM tweet
+        WHERE screen_name = "{screen_name}"
+    '''
+    cursor.execute(query)
+    data = cursor.fetchall()
+    connection.commit()
+    return data
+
+def read_tweets_count(screen_name):
+    connection = sqlite3.connect(TWITTER_DB)
+    cursor = connection.cursor()
+    query = f'''
+        SELECT COUNT(*) 
         FROM tweet
         WHERE screen_name = "{screen_name}"
     '''

@@ -1,65 +1,77 @@
-import nest_asyncio
-from io import StringIO
-import time
-import sqlite3
-import pandas as pd
-import json
-from datetime import datetime
-from urllib.parse import urlparse
-from collections import Counter
-
-from config import api
-
-from read_write import readData, writeData
-import en_core_web_sm
-import tweepy
-import storage
 import calendar
+import json
+import sqlite3
+import time
+from collections import Counter
+from datetime import datetime
+from io import StringIO
+from urllib.parse import urlparse
+
+import en_core_web_sm
+import nest_asyncio
+import pandas as pd
+import tweepy
+
 import getters
+import storage
+from config import api
+from read_write import readData, writeData
 
 
-DATABASE = "./data/osiris.db"
+
+def get_all_tweets(api, screen_name, since, until=datetime.now()):
+    try:
+        all_tweets = []
+        tweets = api.user_timeline(screen_name=screen_name, count=200, tweet_mode = 'extended')
+        all_tweets.extend(tweets)
+        oldest_id = all_tweets[-1].id - 1
+
+        while True:
+            tweets = api.user_timeline(screen_name=screen_name, count=200, max_id=oldest_id-1, tweet_mode = 'extended')
+            if len(tweets) == 0:
+                break
+            all_tweets.extend(tweets)
+            oldest_id = tweets[-1].id
+
+            print(datetime.date(tweets[-1].created_at), '<', datetime.strptime(until, "%Y-%m-%d").date())
+            if not ((datetime.date(tweets[-1].created_at) >= datetime.strptime(until, "%Y-%m-%d").date()) and (datetime.date(tweets[-1].created_at) <= datetime.strptime(since, "%Y-%m-%d").date())):
+                break
+
+        for tweet in all_tweets:
+            quote_screen_name = ''
+            retweete_screen_name = ''
+
+            try: quote_screen_name = api.get_status(id=tweet.quoted_status_id).user.screen_name
+            except Exception: pass
+
+            try: retweete_screen_name = tweet.retweeted_status.user.screen_name
+            except Exception: pass
+
+            storage.create_tweet(tweet, quote_screen_name=quote_screen_name, retweete_screen_name=retweete_screen_name)
+    except Exception as e:
+        return ({"status_code": 500, "result": e})
+    
+    return ({"status_code": 200})
 
 
-# Не предусмотрено, если пользователь удалил твит
-def get_tweets(api, screen_name):   
+
+def get_last_tweets(api, screen_name, count=200):
     """
-    Gets all new tweets from Twitter Account 
-    """ 
-    all_tweets = []
-    lastest = storage.read_last_tweet(screen_name)[0][0]
-
-    new_tweets = api.user_timeline(screen_name=screen_name, count=1)
-    all_tweets.extend(new_tweets)
-    
-    if all_tweets[0].id == lastest:
-        return 'all tweets up to date!'
-
-    last = all_tweets[-1].id - 1    
-    while len(new_tweets) > 0:
-        print(f"getting tweets before {last}")
-        new_tweets = api.user_timeline(screen_name=screen_name, count=200, max_id=last, since_id=lastest)
-        all_tweets.extend(new_tweets)
-        last = all_tweets[-1].id - 1
-    
-    for tweet in all_tweets:
+    200 is the maximum allowed tweets count. 'Extended' mode necessary to keep full text 
+    otherwise only the first 140 words are extracted.
+    """
+    tweets = api.user_timeline(screen_name=screen_name, count=count, tweet_mode = 'extended')
+    for tweet in tweets:
         quote_screen_name = ''
         retweete_screen_name = ''
-        try:
-            quote_screen_name = api.get_status(id=tweet.quoted_status_id).user.screen_name
-        except Exception:
-            pass
 
-        try:
-            retweete_screen_name = tweet.retweeted_status.user.screen_name
-        except Exception as e:
-            pass
+        try: quote_screen_name = api.get_status(id=tweet.quoted_status_id).user.screen_name
+        except Exception: pass
+
+        try: retweete_screen_name = tweet.retweeted_status.user.screen_name
+        except Exception: pass
 
         storage.create_tweet(tweet, quote_screen_name=quote_screen_name, retweete_screen_name=retweete_screen_name)
-        
-        
-    print(f"...{len(all_tweets)} tweets downloaded!")
-
 
 
 def save_tweets_csv(screen_name, tweets):
@@ -76,7 +88,6 @@ def get_tweet_dates(data):
             dates[str(datetime.strptime(item, "%Y-%m-%d %H:%M:%S%z").date())] += 1
         else:
             dates[str(datetime.strptime(item, "%Y-%m-%d %H:%M:%S%z").date())] = 1
-    print(dates)
     return dates
 
 
@@ -91,7 +102,7 @@ def get_tweet_time(data):
 
 
 def get_tweet_weekday(data):
-    weekdays = {'Sunday': 0, 'Monday': 0, 'Tuesday': 0, 'Wednesday': 2, 'Thursday': 1, 'Friday': 0, 'Saturday': 0}
+    weekdays = {'Sunday': 0, 'Monday': 0, 'Tuesday': 0, 'Wednesday': 0, 'Thursday': 0, 'Friday': 0, 'Saturday': 0}
 
     for item in data:
         if weekdays.get(str(calendar.day_name[datetime.strptime(item, "%Y-%m-%d %H:%M:%S%z").weekday()])): 
@@ -129,25 +140,13 @@ morph = pymorphy2.MorphAnalyzer()
 
 def get_sentiment(selectText):
     words = [morph.parse(word)[0].normal_form for word in re.findall(r'\w+', selectText)]
-    #sentence_2 = {" ".join(words)}
     sentence = " ".join(words)
     result = sent.analyze(sentence)
     return(result)
 
 loop = nest_asyncio.asyncio.new_event_loop()
 nest_asyncio.asyncio.set_event_loop(loop)
-# asyncio.new_event_loop()
 nest_asyncio.apply()
-# nest_asyncio.set_event_loop(loop)
-# # global conn
-
-# c_influencers = twint.Config()
-# c_influencers.Store_csv = True
-# c_influencers.Output = ("./data/influencers.csv")
-
-# c_auditory = twint.Config()
-# c_auditory.Store_csv = True
-# c_auditory.Output = ("./data/auditory.csv")
 
 
 def followersCross(ListInfluencersName, cross_count=1):
@@ -266,50 +265,6 @@ def get_followers(api, users, ListInfluencersName):
     return ({"status_code": 200})
 
 
-# def getTwits(users,tweets_count=200,until=False,since=False):
-    start_time = time.time()
-    for username in users:
-        if  len(since) < 6:
-            until = False
-        else:
-            until = convertTime3(until)
-            until = until + " 00:00:00"
-        twint.output.clean_lists()
-        c_tweets = twint.Config()
-        c_tweets.Database = "./data/tweets_ca.db"
-        c_tweets.Limit = tweets_count
-        c_tweets.Username = username
-        
-
-        c_tweets.Until = until
-        print('__--_'*20)
-        print(until)
-        twint.run.Search(c_tweets)
-        if  len(since) < 6:
-            print("NOASODOSODSOOOOOOOOOOOOOOOOOOOOOOOOOOOOODDDDDDDDDDDDDDDDDDDDDDDDDSSSSSSSSSSSSSSSSSSSSSSss")
-            since = False
-        else:
-            print("HALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
-            since = convertTime3(since)
-            twint.output.clean_lists()
-            c_tweets = twint.Config()
-            c_tweets.Database = "./data/tweets_ca.db"
-            c_tweets.Limit = 10000
-            c_tweets.Username = username
-            #c_tweets.Until = until
-            print('__--_'*20)
-            print(since)
-            since = since + " 00:00:00"
-            # print(until)
-
-
-            c_tweets.Since = since
-            #c_tweets.Hide_output = True
-            twint.run.Search(c_tweets)
-        print(f"{username} --- {time.time() - start_time} seconds ---")
-    return ({"status_code":200})
-
-
 def getFollowerInfoDB(screen_name):
     # data = storage.read_follower(screen_name)
     # data = storage.read_all_followers()
@@ -377,65 +332,15 @@ def getInfoFromDB(screen_name):
         for url in urls:
             domains.append(getUrlHost(url[0]))
         b = Counter(domains)
-        return({"categories":sorted(b, key=b.get,reverse=True),"count":sorted(b.values(),reverse=True), "status_code":200})
-    # else:
-    #     sql_query = f'''select {type_}, count({type_}) as count from tweets WHERE (screen_name == "{screen_name}") and ({type_} != "")
-    #                     GROUP by {type_}
-    #                     ORDER BY count DESC
-    #                     LIMIT 7''' 
-    #     df = pd.read_sql(sql_query, conn)
-    #     if len(df) == 0:
-    #         return ({"status_code":404})
-    #     else:
-    #         return({"categories":df[type_].values.tolist(),"count":df['count'].values.tolist(),"status_code":200})
+        b = b.most_common()
 
-def chartHeatMapUpdate(username):
-    conn = sqlite3.connect("./data/tweets_ca.db")
-    sql_query = f'''select
-                        si.weekday,
-                        sum(case when si.hour = "00" then ct end) h0,
-                        sum(case when si.hour = "01" then ct end) h1,
-                        sum(case when si.hour = "02" then ct end) h2,
-                        sum(case when si.hour = "03" then ct end) h3,
-                        sum(case when si.hour = "04" then ct end) h4,
-                        sum(case when si.hour = "05" then ct end) h5,
-                        sum(case when si.hour = "06" then ct end) h6,
-                        sum(case when si.hour = "07" then ct end) h7,
-                        sum(case when si.hour = "08" then ct end) h8,
-                        sum(case when si.hour = "09" then ct end) h9,
-                        sum(case when si.hour = "10" then ct end) h10,
-                        sum(case when si.hour = "11" then ct end) h11,
-                        sum(case when si.hour = "12" then ct end) h12,
-                        sum(case when si.hour = "13" then ct end) h13,
-                        sum(case when si.hour = "14" then ct end) h14,
-                        sum(case when si.hour = "15" then ct end) h15,
-                        sum(case when si.hour = "16" then ct end) h16,
-                        sum(case when si.hour = "17" then ct end) h17,
-                        sum(case when si.hour = "18" then ct end) h18,
-                        sum(case when si.hour = "19" then ct end) h19,
-                        sum(case when si.hour = "20" then ct end) h20,
-                        sum(case when si.hour = "21" then ct end) h21,
-                        sum(case when si.hour = "22" then ct end) h22,
-                        sum(case when si.hour = "23" then ct end) h23
-                    from (select count(tweet) as ct, strftime("%w",datetime(rtrim(created_at,"000"), "unixepoch","localtime")) as weekday,
-                        strftime("%H",datetime(rtrim(created_at,"000"), "unixepoch","localtime")) as hour
-                                        from tweets where (screen_name == "{username}")
-                                        GROUP by weekday, hour
-                                        order by weekday, hour) si
-                    group by si.weekday;'''
-    df = pd.read_sql(sql_query, conn)
-    if len(df) == 0:
-        return ({"status_code":404})
-    else:
-        df.fillna(0, inplace=True)
-        df = df.astype('int')
-        series =[]
-        for i in range(0,7):
-            try:
-                series.append(list(df.loc[i][1:]))
-            except KeyError:
-                series.append([0]*24)
-        return({"heatmap":series,"status_code":200})
+        counter_size = 12
+        if len(b) < 12:
+            counter_size = len(b)
+
+        
+        return({"categories": [b[i][0] for i in range(counter_size)],"count": [b[i][1] for i in range(counter_size)], "status_code":200})
+   
 
 def getCountTwits(username):
     conn = sqlite3.connect("./data/tweets_ca.db")
@@ -469,40 +374,13 @@ def chartWeekday(screen_name):
     weekdays = get_tweet_weekday(all_data)
     sorted_weekdays = [weekdays.get('Sunday'), weekdays.get('Monday'), weekdays.get('Tuesday'), weekdays.get('Wednesday'),
                     weekdays.get('Thursday'), weekdays.get('Friday'), weekdays.get('Saturday')] 
-
     if len(weekdays) == 0:
         return ({"status_code": 404})
     else:
         return({"weekdays": sorted_weekdays, "status_code": 200})
 
+
 def chartHeatMap(screen_name):
-    data = storage.read_tweets_created_at(screen_name)
-    all_data = []
-    for item in data:
-        all_data.append(item[0])
-
-    time = get_tweet_time(all_data) 
-    all_time = []
-
-    for i in range(24):
-        j = str(i)
-        if len(j) == 1:
-            j = '0'+j
-        
-        result = time.get(j)
-        if not result:
-            result = 0
-            
-        all_time.append(result)
-
-    if len(time) == 0:
-        return ({"status_code": 404})
-    else:
-        print(all_time)
-        return({"time": all_time, "status_code": 200})
-
-
-def chartHeatMap2(screen_name):
     data = storage.read_tweets_created_at(screen_name)
     all_data = []
     for item in data:
@@ -520,7 +398,6 @@ def chartHeatMap2(screen_name):
 
 def get_lang_count(screen_name):
     data = storage.read_tweets_lang(screen_name)
-    print(data)
     all_data = []
     for item in data:
         all_data.append(item[0])
@@ -566,7 +443,13 @@ def get_hashtags(screen_name):
     data = storage.read_tweets_hashtags(screen_name)
     hashtags = extract_hashtags(data)
     b = Counter(hashtags)
-    return({"chartHashCategories": [category for category in b.keys()], "chartHashCount": [number for number in b.values()], "status_code":200})
+    b = b.most_common()
+
+    counter_size = 12
+    if len(b) < 12:
+        counter_size = len(b)
+    
+    return({"chartHashCategories": [b[i][0] for i in range(counter_size)], "chartHashCount": [b[i][1] for i in range(counter_size)], "status_code":200})
 
 
 def extract_user_mentions(user_mentions):
@@ -588,19 +471,24 @@ def get_user_mentions(screen_name):
     data = storage.read_tweets_user_mentions(screen_name)
     user_mentions = extract_user_mentions(data)
     b = Counter(user_mentions)
-    return({"chartCashCategories": [category for category in b.keys()], "chartCashCount": [number for number in b.values()], "status_code":200})
+    b = b.most_common()
+
+    counter_size = 12
+    if len(b) < 12:
+        counter_size = len(b)
+
+    return({"chartCashCategories": [b[i][0] for i in range(counter_size)], "chartCashCount": [b[i][1] for i in range(counter_size)], "status_code":200})
 
 
 def getTwitsToBoard(api, screen_name, created_at=datetime.now()):
-    get_tweets(api, screen_name)
     tweets = storage.read_tweets(screen_name, created_at)
     all_tweets = []
     for tweet in tweets:
-        all_tweets.append({"tweet": tweet[0], "date": str(datetime.strptime(tweet[1], "%Y-%m-%d %H:%M:%S%z").date()), "time": str(datetime.strptime(tweet[1], "%Y-%m-%d %H:%M:%S%z").time()), "screen_name": tweet[2], "name": tweet[3], "link": f"https://twitter.com/{tweet[2]}/status/{tweet[4]}"})
+        all_tweets.append({"tweet": tweet[0], "created_at": tweet[1], "date": str(datetime.strptime(tweet[1], "%Y-%m-%d %H:%M:%S%z").date()), "time": str(datetime.strptime(tweet[1], "%Y-%m-%d %H:%M:%S%z").time()), "screen_name": tweet[2], "name": tweet[3], "link": f"https://twitter.com/{tweet[2]}/status/{tweet[4]}"})
     if len(tweets) != 0:
         return({"TwitsToBoard": all_tweets, "status_code": 200})
     else:
-        return({"TwitsToBoard": "Not founded tweets!", "status_code": 200})
+        return({"TwitsToBoard": "Not founded tweets!", "status_code": 404})
 
 def convertTime2(string):
     datetime_object = datetime.strptime(string, '%Y-%m-%d')
@@ -645,10 +533,12 @@ def getInfoAboutAccount(api, username):
 
 
 def get_tweet_type_chart(screen_name):
-    retweet_count = 0
-    data = storage.read_tweets_type(screen_name, 'retweet_count')
+    retweet_screen_name = []
+    data = storage.read_tweet_retweete_screen_name(screen_name)
     for item in data:
-        retweet_count += int(item[0])
+        retweet_screen_name.append(item[0])
+    c = Counter(retweet_screen_name)
+    retweet_count = sum(c.values()) 
 
     is_quote_status = []
     data = storage.read_tweets_type(screen_name, 'is_quote_status')
@@ -668,7 +558,7 @@ def get_tweet_type_chart(screen_name):
     b = Counter(is_quote_status)
     b2 = {'Цитаты': b.get(1)}
     d = Counter(in_reply_to_status_id)
-    c2 = {'Ответы': d.get('True')}
+    c2 = {'Твиты/Ответы': d.get('True')}
 
     result = {}
     result.update(a2)
@@ -686,9 +576,14 @@ def get_tweet_quote_screen_name(screen_name):
             quote_screen_name.append(item[0])
 
     c = Counter(quote_screen_name)
+    c = c.most_common()
+
+    counter_size = 12
+    if len(c) < 12:
+        counter_size = len(c)
 
     if len(quote_screen_name) != 0:
-        return({"quote_screen_names": [i for i in c.keys()], "quote_screen_name_count": [i for i in c.values()], "status_code": 200})
+        return({"quote_screen_names": [c[i][0] for i in range(counter_size)], "quote_screen_name_count": [c[i][1] for i in range(counter_size)], "status_code": 200})
     else:
         return({"quote_screen_names": "", "quote_screen_name_count": 0, "status_code": 200})
 
@@ -700,41 +595,16 @@ def get_tweet_retweet_screen_name(screen_name):
         retweet_screen_name.append(item[0])
 
     c = Counter(retweet_screen_name)
+    c = c.most_common()
+
+    counter_size = 12
+    if len(c) < 12:
+        counter_size = len(c)
 
     if len(retweet_screen_name) != 0:
-        return({"retweet_screen_names": [i for i in c.keys()], "retweet_screen_name_count": [i for i in c.values()], "status_code": 200})
+        return({"retweet_screen_names": [c[i][0] for i in range(counter_size)], "retweet_screen_name_count": [c[i][1] for i in range(counter_size)], "status_code": 200})
     else:
         return({"retweet_screen_names": "", "retweet_screen_name_count": 0, "status_code": 200})
-
-
-# def getGeofenceTwits(center,radius):
-#     start_time = time.time()
-#     for username in users:
-#         try:
-#             loop = nest_asyncio.asyncio.new_event_loop()
-#             nest_asyncio.asyncio.set_event_loop(loop)
-#             nest_asyncio.apply()
-#             twint.output.clean_lists()
-#             c_geo = twint.Config()
-#             print(type(center))
-#             center = center.replace("(","").replace(")","")
-#             c_geo.Geo = f"{center}, {radius}km"
-#             print(c_geo.Geo)
-#             c_geo.Limit = 20
-#             c_geo.Hide_output = False
-#             c_geo.Pandas = True
-#             c_geo.Lang = "en"
-#             c_geo.Translate = True
-#             c_geo.TranslateDest = "ru"
-#             c_geo.Pandas_clean = True  
-#             twint.run.Search(c_geo)
-#             Tweets_df = twint.storage.panda.Tweets_df
-#             twits = Tweets_df.T.to_dict()
-#             print("--- %s seconds ---" % (time.time() - start_time))
-#         except:
-#             return ({"status_code":400})
-    
-#     return ({"status_code":200,"twits":twits})
 
 
 def getGeofenceTwits(center=None, radius=None, keyword='*'):

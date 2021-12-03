@@ -1,8 +1,7 @@
-import sqlite3
 import tweepy
+
 import twitter
 
-import storage
 
 consumer_key = 'u4SD5KlVGm59ftBTb69glEtp1'
 consumer_secret = 'PCSFhTShUoKzASdExZh5pz54nP1v4uo0KheBotPpZUUoQ3r1sV'
@@ -15,9 +14,20 @@ auth.set_access_token(access_key, access_secret)
 api = tweepy.API(auth)
 
 
-DATABASE = "./data/osiris.db"
-connection = sqlite3.connect(DATABASE)
-
 if __name__ == '__main__':
-    storage.init(connection, DATABASE)
-    twitter.get_tweets(api, connection, '@voyage')
+    twitter.get_last_tweets(api,'@voyage')
+    twitter.get_last_tweets(api, 'wh1Co4nkIcsfUnR')
+    twitter.get_last_tweets(api, 'hmfaigen')
+    twitter.get_last_tweets(api, '5prings')
+    twitter.get_last_tweets(api, 'computarmachine')
+    twitter.get_last_tweets(api, 'techferret')
+    twitter.get_last_tweets(api, 'Sony_Rus')
+    twitter.get_last_tweets(api, 'dariaearlgirl')
+    twitter.get_last_tweets(api, 'nastyahowell')
+    twitter.get_last_tweets(api, 'melkoridze')
+    twitter.get_last_tweets(api, 'ru_hp')
+    twitter.get_last_tweets(api, '0xPolygon')
+    twitter.get_last_tweets(api, 'vkontakte')
+    twitter.get_last_tweets(api, 'KlaryMorningst1')
+    twitter.get_last_tweets(api, 'joelcomm')
+    twitter.get_last_tweets(api, 'PLuWex')

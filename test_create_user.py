@@ -15,11 +15,20 @@ auth.set_access_token(access_key, access_secret)
 api = tweepy.API(auth)
 
 
-DATABASE = "./data/osiris.db"
-connection = sqlite3.connect(DATABASE)
-
 if __name__ == '__main__':
-    storage.init(connection, DATABASE)
-    twitter.getInfoAboutAccount(api, connection, '@wh1Co4nkIcsfUnR')
-    twitter.getInfoAboutAccount(api, connection, '@hmfaigen')
-    twitter.getInfoAboutAccount(api, connection, '@voyage')
+    storage.init()
+    req = twitter.getInfoAboutAccount(api, 'wh1Co4nkIcsfUnR')
+    req = twitter.getInfoAboutAccount(api, 'hmfaigen')
+    req = twitter.getInfoAboutAccount(api, '5prings')
+    req = twitter.getInfoAboutAccount(api, 'computarmachine')
+    req = twitter.getInfoAboutAccount(api, 'techferret')
+    req = twitter.getInfoAboutAccount(api, 'Sony_Rus')
+    req = twitter.getInfoAboutAccount(api, 'dariaearlgirl')
+    req = twitter.getInfoAboutAccount(api, 'nastyahowell')
+    req = twitter.getInfoAboutAccount(api, 'melkoridze')
+    req = twitter.getInfoAboutAccount(api, 'ru_hp')
+    req = twitter.getInfoAboutAccount(api, '0xPolygon')
+    req = twitter.getInfoAboutAccount(api, 'vkontakte')
+    req = twitter.getInfoAboutAccount(api, 'KlaryMorningst1')
+    req = twitter.getInfoAboutAccount(api, 'joelcomm')
+    req = twitter.getInfoAboutAccount(api, 'PLuWex')

@@ -43,10 +43,10 @@ analyzze = function () {
                 $("#getTwitsButton").click()
               }
               if (msg.countTwits != 0){
-                $("#countTwits").html(msg.countTwits + " Твитов в базе")
-                $("#countTwits1").html(msg.countTwits)
+                $("#countTwits").html(msg.count_tweets_in_db + " Твитов в базе")
+                $("#countTwits1").html(msg.count_tweets_in_db)
                 $("#countTwits2").html(msg.countTwits)
-                $('#anzlyzeInput').val(msg.name)
+                $('#anzlyzeInput').val(accountName)
                 $("#messageBoard").html("")
                 
                 sizze = Object.keys(msg.TwitsToBoard).length
@@ -54,7 +54,9 @@ analyzze = function () {
                   for (var i = 0; i < sizze; i++) {
                     addMessageOnBoard(msg.TwitsToBoard[i]);
                   }
+                  console.log(msg.TwitsToBoard)
                   $('#untilTwitsToBoard').val(msg.TwitsToBoard[sizze-1]['created_at'])
+                  console.log(msg.TwitsToBoard[sizze-1]['created_at'])
                 }
 
                 ApexCharts.exec('chartAnswers', 'updateOptions', {
@@ -71,7 +73,7 @@ analyzze = function () {
                   data: msg.chartAnswersCount
                 }], true);
 
-                console.log(msg.weekdays_time)
+                console.log(msg.weekdays)
 
                 ApexCharts.exec('chartDayOfWeek', 'updateOptions', {
                   series: msg.weekdays
@@ -232,7 +234,6 @@ analyzze = function () {
                 $('#untilTwits').val(msg.charttDay[0])
                 $('#sinceTwits').val(msg.charttDay[msg.charttDay.length - 1])
               }
-              // enableScroll()
               
           },
           error: function(msg) {

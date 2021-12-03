@@ -1,5 +1,5 @@
 getTwits = function () {
-    var accountName = $('#anzlyzeInput').val();
+    var accountName = document.getElementById("acc_username").innerHTML.slice(1)
     var until = $('#untilTwits').val();
     var since = $('#sinceTwits').val();
     if (accountName != "") {
@@ -11,6 +11,7 @@ getTwits = function () {
             dataType: "json",
             data: datta,
             success: function(msg) {
+                document.getElementById('anzlyzeInput').value = accountName;
                 $("#analyzeButton").click()
             },
             error: function(msg) {
