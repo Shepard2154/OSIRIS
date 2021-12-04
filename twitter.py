@@ -18,41 +18,54 @@ from config import api
 from read_write import readData, writeData
 
 
+def get_all_tweets(api, screen_name, since, until=str(datetime.now().date())):
+    all_tweets = []
+    tweets = []
 
-def get_all_tweets(api, screen_name, since, until=datetime.now()):
     try:
-        all_tweets = []
         tweets = api.user_timeline(screen_name=screen_name, count=200, tweet_mode = 'extended')
-        all_tweets.extend(tweets)
-        oldest_id = all_tweets[-1].id - 1
+    except tweepy.errors.Unauthorized:
+        return ({"status_code": 401})
 
-        while True:
+    if not tweets:
+        return ({"status_code": 404})
+
+    all_tweets.extend(tweets)
+    oldest_id = all_tweets[-1].id
+
+
+    while True:
+        tweets = None
+        try:
             tweets = api.user_timeline(screen_name=screen_name, count=200, max_id=oldest_id-1, tweet_mode = 'extended')
+        except tweepy.errors.Unauthorized:
+            pass
+        
+        if tweets != None:
+
             if len(tweets) == 0:
                 break
+
             all_tweets.extend(tweets)
             oldest_id = tweets[-1].id
 
-            print(datetime.date(tweets[-1].created_at), '<', datetime.strptime(until, "%Y-%m-%d").date())
+            print(len(all_tweets))
             if not ((datetime.date(tweets[-1].created_at) >= datetime.strptime(until, "%Y-%m-%d").date()) and (datetime.date(tweets[-1].created_at) <= datetime.strptime(since, "%Y-%m-%d").date())):
                 break
 
-        for tweet in all_tweets:
-            quote_screen_name = ''
-            retweete_screen_name = ''
+    for tweet in all_tweets:
+        quote_screen_name = ''
+        retweete_screen_name = ''
 
-            try: quote_screen_name = api.get_status(id=tweet.quoted_status_id).user.screen_name
-            except Exception: pass
+        try: quote_screen_name = api.get_status(id=tweet.quoted_status_id).user.screen_name
+        except Exception: pass
 
-            try: retweete_screen_name = tweet.retweeted_status.user.screen_name
-            except Exception: pass
+        try: retweete_screen_name = tweet.retweeted_status.user.screen_name
+        except Exception: pass
 
-            storage.create_tweet(tweet, quote_screen_name=quote_screen_name, retweete_screen_name=retweete_screen_name)
-    except Exception as e:
-        return ({"status_code": 500, "result": e})
-    
+        storage.create_tweet(tweet, quote_screen_name=quote_screen_name, retweete_screen_name=retweete_screen_name)
+
     return ({"status_code": 200})
-
 
 
 def get_last_tweets(api, screen_name, count=200):
@@ -60,7 +73,15 @@ def get_last_tweets(api, screen_name, count=200):
     200 is the maximum allowed tweets count. 'Extended' mode necessary to keep full text 
     otherwise only the first 140 words are extracted.
     """
-    tweets = api.user_timeline(screen_name=screen_name, count=count, tweet_mode = 'extended')
+    tweets = []
+    try:
+        tweets = api.user_timeline(screen_name=screen_name, count=count, tweet_mode = 'extended')
+    except tweepy.errors.Unauthorized:
+        return ({"status_code": 401})
+
+    if not tweets:
+        return ({"status_code": 404})
+
     for tweet in tweets:
         quote_screen_name = ''
         retweete_screen_name = ''
@@ -72,6 +93,8 @@ def get_last_tweets(api, screen_name, count=200):
         except Exception: pass
 
         storage.create_tweet(tweet, quote_screen_name=quote_screen_name, retweete_screen_name=retweete_screen_name)
+
+    return ({"status_code": 200})
 
 
 def save_tweets_csv(screen_name, tweets):
@@ -162,68 +185,53 @@ def followersCross(ListInfluencersName, cross_count=1):
 
 
 def followersCrossNames(ids, cross_count=1):
-    # start_time = time.time()
+    start_time = time.time()
 
-    # followers = []
-    # common_followers_id = storage.read_common_followers(ids, cross_count)
-    # if len(common_followers_id) == 0:
-    #     return ({'status_code': 404})
-
-    # count = 0
-
-    # for i in range(0, len(common_followers_id)):
-    #     count += 1
-        
-    #     follower = None
-    #     try:
-    #         follower = api.get_user(user_id=common_followers_id[i][0])
-    #     except tweepy.errors.TooManyRequests as e1:
-    #         print(e1)
-    #         time.sleep(60*15)
-    #         follower = api.get_user(user_id=common_followers_id[i][0])
-    #     except tweepy.errors.NotFound as e2:
-    #         print(e2, common_followers_id[i][0])
-    #     except tweepy.errors.TweepyException as e3:
-    #         print(e3)
-    #     except tweepy.errors.Forbidden as e4:
-    #         print(e4)
-        
-
-    #     if follower:
-    #         follower_info = {
-    #             'name': follower.name,
-    #             'screen_name': follower.screen_name,
-    #             'statuses_count': follower.statuses_count,
-    #             'friends_count': follower.friends_count,
-    #             'followers_count': follower.followers_count,
-    #             'favourites_count': follower.favourites_count,
-    #             'listed_count': follower.listed_count,
-    #             'profile_image_url': follower.profile_image_url,
-    #             'description': follower.description
-    #         }
-    #         storage.create_follower_user(follower_info)
-    #         followers.append(follower_info.get('screen_name'))
-
-    #     print(f"{count}/{len(common_followers_id)}")
-        
-    # print(f"--- {time.time() - start_time} seconds ---")
-    all_followers = storage.read_all_followers()
     followers = []
-    for i in range(len(all_followers)):
-        followers.append(
-            {
-                'screen_name': all_followers[i][0],
-                'name': all_followers[i][1],
-                'profile_image_url': all_followers[i][2],
-                'statuses_count': all_followers[i][3],
-                'friends_count': all_followers[i][4],
-                'followers_count': all_followers[i][5],
-                'favourites_count': all_followers[i][6],
-                'listed_count': all_followers[i][7],
-                'description': all_followers[i][8] 
-            }
-        )
+    common_followers_id = storage.read_common_followers(ids, cross_count)
+    if len(common_followers_id) == 0:
+        return ({'status_code': 404})
 
+    count = 0
+
+    for i in range(0, len(common_followers_id)):
+        count += 1
+        
+        follower = None
+        try:
+            follower = api.get_user(user_id=common_followers_id[i][0])
+        except tweepy.errors.TooManyRequests as e1:
+            print(e1)
+            time.sleep(60*15)
+            follower = api.get_user(user_id=common_followers_id[i][0])
+        except tweepy.errors.NotFound as e2:
+            print(e2, common_followers_id[i][0])
+        except tweepy.errors.TweepyException as e3:
+            print(e3)
+        except tweepy.errors.Forbidden as e4:
+            print(e4)
+        
+
+        if follower:
+            follower_info = {
+                'name': follower.name,
+                'screen_name': follower.screen_name,
+                'statuses_count': follower.statuses_count,
+                'friends_count': follower.friends_count,
+                'followers_count': follower.followers_count,
+                'favourites_count': follower.favourites_count,
+                'listed_count': follower.listed_count,
+                'profile_image_url': follower.profile_image_url,
+                'description': follower.description
+            }
+            if len(followers) < 500:
+                followers.append(follower_info)
+            else:
+                break
+
+        print(f"{count}/{len(common_followers_id)}")
+        
+    print(f"--- {time.time() - start_time} seconds ---")
     return({'followersCrossNames': followers, 'status_code': 200})
 
 
@@ -266,37 +274,22 @@ def get_followers(api, users, ListInfluencersName):
 
 
 def getFollowerInfoDB(screen_name):
-    # data = storage.read_follower(screen_name)
-    # data = storage.read_all_followers()
-    # if len(data) == 0:
-    #     return ({"status_code": 404})
+    data = storage.read_follower(screen_name)
+    if len(data) == 0:
+        return ({"status_code": 404})
 
-    # user_data = [item for item in data]
-    # influencer = {
-    #     'username': user_data[0], 
-    #     'name': user_data[1], 
-    #     'profile_image_url': user_data[2], 
-    #     'tweets': user_data[3], 
-    #     'following': user_data[4], 
-    #     'followers': user_data[5],
-    #     'likes': user_data[6],
-    #     'media': user_data[7],
-    #     'description': user_data[8]
-    #     }
-    all_followers = storage.read_all_followers()
-    for i in range(len(all_followers)):
-        influencer = {
-                'username': all_followers[i][0],
-                'name': all_followers[i][1],
-                'profile_image_url': all_followers[i][2],
-                'tweets': all_followers[i][3],
-                'following': all_followers[i][4],
-                'followers': all_followers[i][5],
-                'likes': all_followers[i][6],
-                'media': all_followers[i][7],
-                'description': all_followers[i][8] 
-            }
-
+    user_data = [item for item in data]
+    influencer = {
+        'username': user_data[0], 
+        'name': user_data[1], 
+        'profile_image_url': user_data[2], 
+        'tweets': user_data[3], 
+        'following': user_data[4], 
+        'followers': user_data[5],
+        'likes': user_data[6],
+        'media': user_data[7],
+        'description': user_data[8]
+    }
     
     return({"Influencer": influencer, "status_code": 200})
 
@@ -309,14 +302,14 @@ def getUserInfoDB(screen_name):
 
     user_data = [item for item in data[0]]
     influencer = {
-        'username': user_data[0], 
+        'screen_name': user_data[0], 
         'name': user_data[1], 
         'profile_image_url': user_data[2], 
-        'tweets': user_data[3], 
-        'following': user_data[4], 
-        'followers': user_data[5],
-        'likes': user_data[6],
-        'media': user_data[7],
+        'statuses_count': user_data[3], 
+        'friends_count': user_data[4], 
+        'followers_count': user_data[5],
+        'favourites_count': user_data[6],
+        'listed_count': user_data[7],
         'description': user_data[8]
         }
     
@@ -506,7 +499,6 @@ def getUrlHost(url):
 
 def getInfoAboutAccount(api, username):
     user = api.get_user(screen_name=username)
-
     user_info = {
         "id": user.id,
         "name": user.name,
@@ -527,7 +519,6 @@ def getInfoAboutAccount(api, username):
         "date_update": datetime.now().date(),
         "time_update": datetime.now().time(),
     }
-
     storage.create_user(user_info)
     return ({"user": user_info, "status_code": 200})
 
@@ -608,7 +599,8 @@ def get_tweet_retweet_screen_name(screen_name):
 
 
 def getGeofenceTwits(center=None, radius=None, keyword='*'):
-    geo='50.136353,11.575004,25km'
+    geo=f'{center[0]},{center[1]},{radius}km'
+    print(geo)
     COLS = ['id', 'username', 'text', 'date', 'link', 'translate', 'nlikes', 'place', 'nretweets', 'nreplies','retweet', 'hashtags', 'name']
 
     df = pd.DataFrame(columns=COLS)
@@ -618,7 +610,7 @@ def getGeofenceTwits(center=None, radius=None, keyword='*'):
         for tweet in page:
             new_entry = []
             tweet = tweet._json
-            print(tweet)    
+            print(tweet)   
             new_entry += [
                 tweet['id'], 
                 tweet['user']['screen_name'],
@@ -629,34 +621,14 @@ def getGeofenceTwits(center=None, radius=None, keyword='*'):
                 tweet['favorite_count'] 
             ]
 
-            #check if place name is available, in case not the entry is named 'no place'
             try:
                 place = tweet['place']['name']
             except TypeError:
                 place = 'no place'
             new_entry.append(place)
 
-            new_entry.append('600')
-            new_entry.append('600')
-
-            # try:
-            #     place_type = tweet['place']['place_type']
-            # except TypeError:
-            #     place_type = 'na'
-            # new_entry.append(place_type)
-
-            # try:
-            #     bbx = tweet['place']['bounding_box']['coordinates']
-            # except TypeError:
-            #     bbx = 'na'
-            # new_entry.append(bbx)
-
-            #check if coordinates is available, in case not the entry is named 'no coordinates'
-            # try:
-            #     coord = tweet['coordinates']['coordinates']
-            # except TypeError:
-            #     coord = 'no coordinates'
-            # new_entry.append(coord)
+            new_entry.append(tweet['retweet_count'])
+            new_entry.append(tweet['is_quote_status'])
 
             retweete_screen_name = ""
             try:
@@ -670,7 +642,6 @@ def getGeofenceTwits(center=None, radius=None, keyword='*'):
 
             new_entry.append(tweet['user']['name'])
 
-            print([new_entry], COLS)
             single_tweet_df = pd.DataFrame([new_entry], columns=COLS)
             df = df.append(single_tweet_df, ignore_index=True)
             print(df)
@@ -695,8 +666,6 @@ def getGeofenceTwits(center=None, radius=None, keyword='*'):
         if len(df) == 100:
                 break
 
-    for i in twits:
-        print(i)
     return ({"status_code":200,"twits":twits})
 
 
@@ -706,22 +675,27 @@ def newGetTwitsEntity(users, stat_twit_count):
     loop = nest_asyncio.asyncio.new_event_loop()
     nest_asyncio.asyncio.set_event_loop(loop)
     nest_asyncio.apply()
-    print(stat_twit_count)
     for username in users:
         current_tweets = []
         username_tweets = storage.read_tweet_text(username)
         for tweet in username_tweets:
             current_tweets.append(tweet[0])
-        if len(current_tweets):    
+
+        if (0 < len(current_tweets)) and (len(texts) < 1000000):    
             texts = texts + "\n".join(current_tweets)
+        else:
+            break
+        
+        print(username, len(current_tweets))
     print("--- %s seconds ---" % (time.time() - start_time))
     return(getAllEntity(texts))
-
 
 
 def getAllEntity(texts):
     texts = deEmojify(texts)
     all_entities = {}
+    if len(texts) > 1000000: 
+        texts = texts[:1000000]
     doc = nlp(f"{texts}")
     for ent in doc.ents:
         i = ent.label_
@@ -766,77 +740,82 @@ def getAllEntity(texts):
     
     table_data = pd.read_json(StringIO(all_entities_json)).T
     print(table_data.head())
-    table = table_data.sort_values(by='count', ascending=False)
+    
+    if not table_data.empty:
+        table = table_data.sort_values(by='count', ascending=False)
 
-    for i in range(len(table)):
-        sent_pos = []
-        sent_neg = []
-        sent_neutral = []
-        score_neg = 0
-        score_pos = 0
-        score_neutral = 0
-        row = table.iloc[i]
-        for j in row['sentences']:
-            score = get_sentiment(j)['score']
-            if score > 0:
-                score_pos = score_pos + 1
-                sent_pos.append(j)
-            elif score < 0:
-                score_neg = score_neg + 1
-                sent_neg.append(j)
-            else:
-                score_neutral = score_neutral + 1
-                sent_neutral.append(j)
-        table.iloc[i]['tone_pos'] = score_pos
-        table.iloc[i]['tone_neg'] = score_neg
-        table.iloc[i]['tone_neutral'] = score_neutral
-        table.iloc[i]['sentences_pos'] = sent_pos       
-        table.iloc[i]['sentences_neg'] = sent_neg       
-        table.iloc[i]['sentences_neutral'] = sent_neutral
-    table = table.sort_values('tone_pos',ascending=False)
-    tone_pos = list(table['tone_pos'][:20])
-    names_pos = list(table.index[:20])
-    sentences_pos = list(table['sentences_pos'][:20])
+        for i in range(len(table)):
+            sent_pos = []
+            sent_neg = []
+            sent_neutral = []
+            score_neg = 0
+            score_pos = 0
+            score_neutral = 0
+            row = table.iloc[i]
+            for j in row['sentences']:
+                score = get_sentiment(j)['score']
+                if score > 0:
+                    score_pos = score_pos + 1
+                    sent_pos.append(j)
+                elif score < 0:
+                    score_neg = score_neg + 1
+                    sent_neg.append(j)
+                else:
+                    score_neutral = score_neutral + 1
+                    sent_neutral.append(j)
+            table.iloc[i]['tone_pos'] = score_pos
+            table.iloc[i]['tone_neg'] = score_neg
+            table.iloc[i]['tone_neutral'] = score_neutral
+            table.iloc[i]['sentences_pos'] = sent_pos       
+            table.iloc[i]['sentences_neg'] = sent_neg       
+            table.iloc[i]['sentences_neutral'] = sent_neutral
+        table = table.sort_values('tone_pos',ascending=False)
+        tone_pos = list(table['tone_pos'][:20])
+        names_pos = list(table.index[:20])
+        sentences_pos = list(table['sentences_pos'][:20])
 
-    table = table.sort_values('tone_neg',ascending=False)
-    tone_neg = list(table['tone_neg'][:20])
-    names_neg = list(table.index[:20])
-    sentences_neg = list(table['sentences_neg'][:20])
+        table = table.sort_values('tone_neg',ascending=False)
+        tone_neg = list(table['tone_neg'][:20])
+        names_neg = list(table.index[:20])
+        sentences_neg = list(table['sentences_neg'][:20])
 
-    table = table.sort_values('tone_neutral',ascending=False)
-    tone_neutral = list(table['tone_neutral'][:20])
-    names_neutral = list(table.index[:20])
-    sentences_neutral = list(table['sentences_neutral'][:20])
+        table = table.sort_values('tone_neutral',ascending=False)
+        tone_neutral = list(table['tone_neutral'][:20])
+        names_neutral = list(table.index[:20])
+        sentences_neutral = list(table['sentences_neutral'][:20])
 
-    out = {
-        "tone_pos":tone_pos,
-        "names_pos":names_pos,
-        "sentences_pos":sentences_pos,
+        out = {
+            "tone_pos":tone_pos,
+            "names_pos":names_pos,
+            "sentences_pos":sentences_pos,
 
-        "tone_neg":tone_neg,
-        "names_neg":names_neg,
-        "sentences_neg":sentences_neg,
+            "tone_neg":tone_neg,
+            "names_neg":names_neg,
+            "sentences_neg":sentences_neg,
 
-        "tone_neutral":tone_neutral,
-        "names_neutral":names_neutral,
-        "sentences_neutral":sentences_neutral
-    }
+            "tone_neutral":tone_neutral,
+            "names_neutral":names_neutral,
+            "sentences_neutral":sentences_neutral
+        }
 
-    names_sent_pos = {}
-    for i in range(len(out['names_pos'])):
-        names_sent_pos.update({out['names_pos'][i]:out['sentences_pos'][i]})
-        
-    names_sent_neg = {}
-    for i in range(len(out['names_neg'])):
-        names_sent_neg.update({out['names_neg'][i]:out['sentences_neg'][i]})
-        
-    names_sent_neutral = {}
-    for i in range(len(out['names_neutral'])):
-        names_sent_neutral.update({out['names_neutral'][i]:out['sentences_neutral'][i]})
-        
-    out.update({"names_sent_pos":names_sent_pos,"names_sent_neg":names_sent_neg,"names_sent_neutral":names_sent_neutral})
+        names_sent_pos = {}
+        for i in range(len(out['names_pos'])):
+            names_sent_pos.update({out['names_pos'][i]:out['sentences_pos'][i]})
+            
+        names_sent_neg = {}
+        for i in range(len(out['names_neg'])):
+            names_sent_neg.update({out['names_neg'][i]:out['sentences_neg'][i]})
+            
+        names_sent_neutral = {}
+        for i in range(len(out['names_neutral'])):
+            names_sent_neutral.update({out['names_neutral'][i]:out['sentences_neutral'][i]})
+            
+        out.update({"names_sent_pos":names_sent_pos,"names_sent_neg":names_sent_neg,"names_sent_neutral":names_sent_neutral})
 
-    return(rebuildOutput(out))
+        return(rebuildOutput(out))
+
+    else:
+        return({"out_pos": [], "out_neg": [], "out_neutral": [], "out": []})
 
 
 def rebuildOutput(out):
@@ -874,48 +853,3 @@ def deEmojify(inputString):
             except:
                 returnString += ''
     return returnString
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# function for dowloading all followers from account with Rate Limits
-#     try:
-#         sleeptime = 4
-#         pages = tweepy.Cursor(api.get_followers, screen_name=user).pages()
-#         count = 0
-
-#         while True:
-#             try:
-#                 page = next(pages)
-#                 time.sleep(sleeptime)
-#             except tweepy.TooManyRequests:
-#                 print("Wait please! ", tweepy.TooManyRequests)
-#                 time.sleep(60*15) 
-#                 page = next(pages)
-#             except StopIteration:
-#                 print("End of work ", StopIteration)
-#                 break
-
-#             for follower in page:
-#                 count += 1
-#                 current_follower = api.get_user(screen_name=follower.screen_name)
-#                 print(f"{count} of {user}: ", current_follower.id)
-
-#             print("--- %s seconds ---" % (time.time() - start_time))
-            
-#     except Exception as e:
-#         print("other...", e)

@@ -1,6 +1,5 @@
-﻿<!DOCTYPE html>
-<html style="font-family: FontAwesome;"  lang="en">
-
+﻿{% extends "base.html" %}
+{% block content %}
   <head>
 
     <style type="text/css">
@@ -527,7 +526,7 @@
     <meta property="og:title" content="osiris | Open Source Intelligence аnd Recognition System">
     <meta property="og:type" content="website">
     <meta property="og:url" content="/">
-    <title>Open Source Intelligence аnd Recognition System | osiris</title>
+    <title>OSIRIS</title>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link rel="stylesheet" type="text/css" href="../static/css/style.css" />
     <link rel="stylesheet" type="text/css" href="../static/css/generic.css" />
@@ -537,66 +536,6 @@
   </head>
 
   <body>
-    <div class="area"></div><nav class="main-menu uppercase text-gray-800">
-      <ul>
-        <li>
-          <a href="/">
-            <i class="fa fa-user fa-2x"></i> 
-            <span class="nav-text">
-              Персоны
-            </span>
-          </a>
-
-        </li>
-        <li class="has-subnav">
-          <a href="/ca/">
-            <i class="fa fa-search fa-2x"></i>
-            <span class="nav-text">
-              Поиск ЦА
-            </span>
-          </a>
-
-        </li>
-        <li class="has-subnav">
-          <a href="/analitica/">
-            <i class="fa fa-bar-chart-o fa-2x"></i>
-            <span class="nav-text">
-              Аналитика
-            </span>
-          </a>
-
-        </li>
-        <li class="has-subnav">
-          <a href="/geofence/">
-            <i class="fa fa-map-o fa-2x"></i>
-            <span class="nav-text">
-              Геофенсинг
-            </span>
-          </a>
-
-        </li>
-        <li>
-          <a href="/infopovod/">
-            <i class="fa fa-info fa-2x"></i>
-            <span class="nav-text">
-              Инфоповоды
-            </span>
-          </a>
-        </li>
-      </ul>
-
-      <ul class="logout">
-        <li>
-          <a href="/logout/">
-            <i class="fa fa-sign-out fa-2x"></i>
-            <span class="nav-text">
-              Выход
-            </span>
-          </a>
-        </li>
-      </ul>
-    </nav>
-
     <style>
       @import url(//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css);
 
@@ -853,19 +792,14 @@
                   </select>
                 </p>
               </form>
-              <!-- <input id="anzlyzeInput2"
-              class="bg-gray-200 h-10 pr-4 pl-8 font-medium rounded-l-lg
-              text-md focus:outline-none border-r text-gray-900"
-              name="analyze" placeholder="JoeBiden" type="search"
-              value="" style="padding-bottom: 1px;"> -->
           <button id="addNewList"  class="h-auto bg-gray-200 h-10 px-4
             py-2 rounded-r-lg
-            hover:bg-gray-400" style="margin: 10px; padding: 11px; border-radius: .5rem; color:#777" onclick="false">+</button></div> <!-- addNewListInfluencers()--> 
+            hover:bg-gray-400" style="margin: 10px; padding: 11px; border-radius: .5rem; color:#777" onclick="false">+</button></div> 
               <div class="p-2">
                 <div id="messageBoard" class="flex flex-col md:flex-row
                   md:flex-wrap items-center
-                  md:items-start justify-around -m-2 "> <!-- drag-list-->
-                  <div id="imageEmptyList" class="p-4 w-full lg:w-1/2 xl:w-1/3" style="width: 25%;">   <!-- drag-item draggable="true" data-position="1" -->
+                  md:items-start justify-around -m-2 ">
+                  <div id="imageEmptyList" class="p-4 w-full lg:w-1/2 xl:w-1/3" style="width: 25%;"> 
                     <img src="../static/images/nothing.png">
                   </div>
                 </div>
@@ -876,8 +810,6 @@
             <div class="lg:mt-0 xl:w-1/3 mx-2 h-auto bg-white rounded-lg shadow
               relative p-4 mt-4"
               style="min-height: 200px;">
-              <!-- <h2 class="ml-4 mt-2 mb-4 text-lg font-semibold uppercase">Лидеры мнений</h2>
-              <h2 class="ml-4 mt-2 mb-4 text-lg font-semibold uppercase">Лидеры мнений2</h2> -->
               <div class="container mx-auto flex 
                 items-center p-2" style="justify-content:center;">
                 <h2 class="mt-2 text-lg font-semibold uppercase">Данные</h2>
@@ -905,8 +837,6 @@
             <div id="filterFollowers" class="lg:mt-0 lg:w-2/3 mx-2 h-auto bg-white rounded-lg shadow
               relative p-4 mt-4"
               style="min-height: 200px;visibility: hidden;">
-              <!-- <h2 class="ml-4 mt-2 mb-4 text-lg font-semibold uppercase">Лидеры мнений</h2>
-              <h2 class="ml-4 mt-2 mb-4 text-lg font-semibold uppercase">Лидеры мнений2</h2> -->
               <div class="container mx-auto flex 
                 items-center p-2" style="justify-content:space-around;">
                 <h2 class="mt-2 text-lg font-semibold uppercase">Данные</h2>
@@ -940,56 +870,10 @@
             <div class="lg:mt-0 lg:w-full mx-2 h-auto bg-white rounded-lg shadow
               relative p-4 mt-4"
               style="min-height: 200px; visibility: view;">
-              <!-- <h2 class="ml-4 mt-2 mb-4 text-lg font-semibold uppercase">Лидеры мнений</h2> -->
               <div class="p-2">
                 <div id="caBoard" class="flex md:flex-col
                   md:flex-wrap items-center
                   md:items-start">
-                  <!-- <div id="MaryBugaeva" class="lg:w-full" style="padding: .8rem;">
-                    <div name="border_color" class="flex flex-col shadow rounded text-gray-800 p-2
-                      relative border-l-4 bg-gray-100 border-purple-600">
-                      <div class="relative" style="padding: .5rem;">
-                        <div class="flex flex-row"><img id="acc_image" alt="@MaryBugaeva's Profile
-                            Picture" class="rounded-lg mr-4 h-12 w-h-12" src="https://pbs.twimg.com/profile_images/932333653090283520/efgG0ltw_400x400.jpg" title="@MaryBugaeva's Profile Picture">
-                          <div class="flex flex-col overflow-hidden max-w-2xs
-                            lg:max-w-full xl:max-w-2xs"><a id="acc_twitter_link" href="https://twitter.com/MaryBugaeva" rel="noopener
-                              noreferrer" target="_blank" title="@MaryBugaeva's Twitter Profile"><span class="break-all leading-none font-semibold text-xl
-                                hover:text-brand whitespace-no-wrap" id="acc_name">Mary Bugaeva</span></a>
-                                <a id="acc_username_2" rel="noopener
-                              noreferrer" target="_blank">
-                              <h2 id="acc_username" class="font-medium text-lg
-                                text-gray-500
-                                hover:text-brand">@MaryBugaeva</h2>
-                            </a></div>
-                            <div class="flex flex-col mr-3 mb-2" aria-describedby="tooltip:8" data-reach-tooltip-trigger=""><a class="text-brand font-semibold 
-                              hover:text-brand-dark" rel="noopener noreferrer" target="_blank"></a><span class="text-gray-500
-                              "></span></div>
-                            <div class="flex flex-col mr-3 mb-2" aria-describedby="tooltip:8" data-reach-tooltip-trigger=""><a id="acc_tweet_count" class="text-brand font-semibold 
-                              hover:text-brand-dark" rel="noopener noreferrer" target="_blank">487</a><span class="text-gray-500
-                              ">Твиты</span></div>
-                          <div class="flex flex-col mr-3 mb-2" aria-describedby="tooltip:9" data-reach-tooltip-trigger=""><a id="acc_following_count" class="text-brand font-semibold 
-                              hover:text-brand-dark" name="acc_following_count" rel="noopener noreferrer" target="_blank">46</a><span class="text-gray-500
-                              ">Подписки</span></div>
-                          <div class="flex flex-col mr-3 mb-2" aria-describedby="tooltip:10" data-reach-tooltip-trigger=""><a id="acc_followers_count" class="text-brand font-semibold 
-                              hover:text-brand-dark" name="acc_followers_count" rel="noopener noreferrer" target="_blank">15</a><span class="text-gray-500
-                              ">Подписчики</span></div>
-                          <div class="flex flex-col mr-3 mb-2" aria-describedby="tooltip:11" data-reach-tooltip-trigger=""><a id="acc_likes_count" class="text-brand font-semibold 
-                              hover:text-brand-dark" rel="noopener noreferrer" target="_blank">1111</a><span class="text-gray-500
-                              ">Лайки</span></div>
-                          <div class="flex flex-col mr-3 mb-2" aria-describedby="tooltip:12" data-reach-tooltip-trigger=""><a id="acc_media_count" class="text-brand font-semibold 
-                              hover:text-brand-dark" rel="noopener noreferrer" target="_blank">0</a><span class="text-gray-500
-                              ">Списки</span></div>
-                          <p id="acc_bio" class="break-words leading-tight" style="padding: 15px;">Instagram:mashabugaeva_13</p>
-                              <button onclick="removeUserFromList('MaryBugaeva')" onmouseover="this.style.backgroundColor='#AB0606';" onmouseout="this.style.backgroundColor='lightcoral';" style="border-radius:100px; padding-top:4px; padding-bottom:4px; padding-left:10px; padding-right:10px; font-family:revert; margin-left:10px; align-content: space-around;
-                               background-color: lightcoral;" class="shadow-inner absolute inline-flex justify-center
-                          items-baseline text-sm mr-2 px-2 rounded top-0
-                          right-0 text-white ml-4 bg-teal-600">X</button>
-
-                        </div>
-                      </div>
-                    </div>
-                  </div> -->
-
                 </div>
                 <form class="flex h-16 items-center ml-4" style="justify-content: center;" onsubmit="return false">
                   <div class="relative text-gray-400 flex items-center
@@ -1004,48 +888,6 @@
           </section>
         </div>
       </div>
-      <footer class="bg-white py-8 mt-8 lg:mt-16 w-full">
-        <div class="container mx-auto px-4">
-
-          <nav class="flex flex-col sm:flex-row justify-between w-full mt-4">
-            <div class="mb-2 w-full">
-              <p class="uppercase text-gray-400 font-medium text-lg sm:mb-2">You</p>
-              <ul class="text-xs mb-3">
-                <li class="inline-block mr-2 sm:block sm:mr-0"><a
-                    href="/account"><button
-                      class="text-gray-800 hover:text-brand text-lg"
-                      type="button">My Account</button></a></li>
-                <li class="mt-2 inline-block mr-2 sm:block sm:mr-0"><a
-                    href="/logout"><button
-                      class="text-gray-800 hover:text-brand text-lg"
-                      type="button">Sign Out</button></a></li>
-              </ul>
-            </div>
-            <div class="w-full">
-            </div>
-            <div class="w-full">
-            </div>
-            <div class="w-full">
-              <p class="uppercase text-gray-400 font-medium text-lg sm:mb-2">We</p>
-              <ul class="text-xs mb-3">
-                <li class="mt-2 inline-block mr-2 sm:block sm:mr-0"><a
-                    href="/about"><button
-                      class="text-gray-800 hover:text-brand text-lg"
-                      type="button">About</button></a></li>
-                <li class="mt-2 inline-block mr-2 sm:block sm:mr-0"><a
-                    href="/contact"><button
-                      class="text-gray-800 hover:text-brand text-lg"
-                      type="button">Contact</button></a></li>
-              </ul>
-              <div class="text-lg">Si vis pacem, para bellum. <a
-                  href="https://www.github.com/useruser"
-                  rel="noopener noreferrer" target="_blank" title="useruser's
-                  Github Profile"><span
-                    class="text-gray-800 hover:text-brand">@useruser</span></a></div>
-            </div>
-          </nav>
-        </div>
-      </footer>
     </main>
     <div id="modals"></div>
     <div id="portal"></div>
@@ -1057,32 +899,6 @@
       <input id="untilTwits" hidden>
       <input id="untilTwitsToBoard" hidden></div>
     <!--===============================================================================================-->
-    <script src="../static/js/analyzze.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartAnswers.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartClient.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartDayOfWeek.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartHash.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartheatmap.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartLang.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartQuotes.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartRetweet.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartt.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartTypeTwit.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/chartUrl.js"></script>
-    <!--===============================================================================================-->
-    <script src="../static/js/getTwits.js"></script>
-    <!--===============================================================================================-->
     <script src="../static/vendor/jquery/jquery-3.2.1.min.js"></script>
     <!--===============================================================================================-->
     <script src="../static/js/blockscroll.js"></script>
@@ -1090,8 +906,6 @@
     <script src="../static/js/addMessage.js"></script>
     <!--===============================================================================================-->
     <script src="../static/js/addDopMessage.js"></script>
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/dragDrop.js"></script> -->
     <!--===============================================================================================-->
     <script type='text/javascript' src='../static/js/select_demo2.js'></script>
     <!--===============================================================================================-->
@@ -1120,4 +934,4 @@
 
   </body>
 
-</html>
+{% endblock %}

@@ -80,6 +80,8 @@ def init():
     query = """
         CREATE TABLE IF NOT EXISTS
             follower_user (
+                user_ids text not null,
+                follower_id integer not null,
                 screen_name text not null,
                 name text default '',
                 profile_image_url text default '',
@@ -105,10 +107,10 @@ def create_user(user):
         VALUES (
             {user.get('id')},
             "{user.get('screen_name')}",
-            "{user.get('name')}",
-            "{user.get('description').replace('"', "'")}",
-            "{user.get('location')}",
-            "{user.get('url')}",
+            "{user.get('name').replace('"', '')}",
+            "{str(user.get('description')).replace('"', "'")}",
+            "{str(user.get('location')).replace('"', '')}",
+            "{str(user.get('url')).replace('"', '')}",
             '{user.get('join_date')}',
             '{user.get('join_time')}',
             {user.get('statuses_count')},
@@ -141,7 +143,7 @@ def create_follower_user(follower_user):
             {follower_user.get('followers_count')},
             {follower_user.get('favourites_count')},
             {follower_user.get('listed_count')},
-            "{follower_user.get('description').replace('"', "'")}"           
+            "{str(follower_user.get('description')).replace('"', "'")}"           
         )
     """
     print(query)
@@ -211,9 +213,9 @@ def create_tweet(tweet, quote_screen_name='', retweete_screen_name=''):
                 '{tweet.lang}',
                 {tweet.retweet_count},
                 {tweet.favorite_count},
-                '{getters.get_hashtags(tweet)}',
-                '{getters.get_urls(tweet)}',
-                '{getters.get_user_mentions(tweet)}',
+                "{str(getters.get_hashtags(tweet)).replace('"', '')}",
+                "{str(getters.get_urls(tweet)).replace('"', '')}",
+                "{str(getters.get_user_mentions(tweet)).replace('"', '')}",
                 "{place}", 
                 "{coordinates}",
                 {tweet.user.id},
@@ -225,12 +227,11 @@ def create_tweet(tweet, quote_screen_name='', retweete_screen_name=''):
                 '{tweet.in_reply_to_screen_name}',   
                 {tweet.is_quote_status},
                 '{tweet.retweeted}',
-                '{getters.get_media_url(tweet)}',
+                "{str(getters.get_media_url(tweet)).replace('"', '')}",
                 '{quote_screen_name}',
                 '{retweete_screen_name}'
             )
         """
-    print(query)
     cursor.execute(query)
     connection.commit()
 
@@ -414,7 +415,7 @@ def create_follower_name(screen_name, follower_name):
     INSERT or REPLACE INTO followers_names
     VALUES (
         "{screen_name}", 
-        "{follower_name}", 
+        "{follower_name.replace('"', '')}", 
         "{time_update}")
     '''
     cursor.execute(query)
@@ -441,15 +442,20 @@ def create_follower(user_id, follower_id):
 def read_common_followers(ids: list, cross_count: int):
     connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
+
+    ids = tuple(ids)
+    if len(ids) == 1:
+        ids = str(ids).replace(',', '')
+
     query = f'''
         SELECT follower_id
         FROM (
             SELECT follower_id, COUNT(follower_id) as quontity
             FROM follower
-            WHERE id IN {tuple(ids)}
+            WHERE id IN {ids}
             GROUP BY follower_id
         )
-        WHERE quontity >= {cross_count}
+        WHERE quontity = {cross_count}
     '''
     cursor.execute(query)
     data = cursor.fetchall()

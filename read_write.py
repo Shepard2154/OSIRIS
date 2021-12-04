@@ -10,7 +10,7 @@ def readData(path=None, name='./data/history.json'):
     return(history)
 
 
-def writeData(new, name='history.json'):
+def writeData(new, name='./data/history.json'):
     history_old = readData(name=name)
     history_old.update(new)
     with open(name, "w") as write_file:

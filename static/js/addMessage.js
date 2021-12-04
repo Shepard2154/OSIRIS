@@ -1,15 +1,4 @@
 addMessageOnBoard = function (human) {
-    // const human = {
-    //     screen_name: 'KremlinRussia',
-    //     name: 'Web Президент',
-    //     date: '13-10-2001',
-    //     time: '12:00',
-    //     tweet:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quisque egestas diam in arcu cursus euismod quis viverra nibh. Eu scelerisque felis...",
-    //     link:"http://google.com/",
-    //     urls:''
-    // }
-
-    // And then create our markup:
     const markup = `
     <div class="p-4 w-full lg:w-1/2 xl:w-1/3">
         <div

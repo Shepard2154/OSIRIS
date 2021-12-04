@@ -1,3 +1,4 @@
+import datetime as dt
 import logging
 import os
 import subprocess
@@ -6,7 +7,6 @@ from datetime import datetime
 import flask
 import flask_login
 import json_log_formatter
-import tweepy
 from dotenv import load_dotenv
 from flask import (
     json,
@@ -26,6 +26,7 @@ from twitter import (
     charttUpdate,
     followersCross,
     followersCrossNames,
+    get_all_tweets,
     getGeofenceTwits,
     getInfoAboutAccount,
     getInfoFromDB,
@@ -251,8 +252,11 @@ def addDopMessage():
         logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
         return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
 
+    if not created_at:
+        created_at = datetime.now()
+
     TwitsToBoard = getTwitsToBoard(api, twitterAccountName, created_at)
-    
+
     if TwitsToBoard['status_code'] != 200:
         logger.error({"error": "TwitsToBoard not found"})
         return make_response(jsonify({"_status_code":404,"error":"TwitsToBoard not found"}),404)
@@ -279,7 +283,6 @@ def getTwitss():
 
 
 @app.route('/addNewListInfluencers/',methods=['POST','OPTIONS','GET'])
-
 def addNewListInfluencers():
     try:
         NewListInfluencersName = json.loads(request.data.decode('utf-8'))['NewListInfluencersName']
@@ -302,29 +305,26 @@ def addNewListInfluencers():
 def ListInfluencers():
     try:
         ListInfluencersName = json.loads(request.data.decode('utf-8'))['ListInfluencersName']
-        print(ListInfluencersName) # e.g. "Американские деятели"
     except:
-        logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
-        return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
+        logger.error('"_status_code": 422, "error": ["info": "incorrect POST-request"]')
+        return make_response(jsonify({"_status_code": 422, "error": {"info": "incorrect POST-request"}}), 422)
+
     data = readData()[ListInfluencersName]
     print(data)
+
     Influencers = []
     if len(data) != 0:
         for user in data:
             req = getUserInfoDB(user)
+            print(req)
             if req['status_code'] == 200:
                 Influencers.append(req['Influencer'])
-    print(len(data))
     try:
         data2 = readData(name='followers_count.json')[ListInfluencersName]
-        print(data2)
     except:
         data2 = False
-    if False:# if twits['status_code'] != 200:
-        logger.error({"error": "Twits not found"})
-        return make_response(jsonify({"_status_code":404,"error":"Twits not found"}),404)
-    else:
-        return make_response(jsonify({"status_code":200,"Influencers":Influencers,"Followers":data2}),200)
+    return make_response(jsonify({"status_code":200,"Influencers":Influencers,"Followers":data2}),200)
+
 
 @app.route('/addUserToList/',methods=['POST','OPTIONS','GET'])
 def addUserToList():
@@ -334,19 +334,23 @@ def addUserToList():
     except:
         logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
         return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
+
     data = readData()[ListInfluencersName]
     if accountName not in data:
-        account = getInfoAboutAccount(accountName,bd=True)
+        account = getInfoAboutAccount(api, accountName)
         if account['status_code'] != 200:
             logger.error({"error": "accountName not found"})
-            return make_response(jsonify({"_status_code":422,"error":"accountName not found"}),422)
+            return make_response(jsonify({"_status_code": 422, "error": "accountName not found"}), 422)
         else:
-            data.append(account['user']['username'])
-            writeData({ListInfluencersName:data})
-
-        return make_response(jsonify({"status_code":200,"Influencer":account['user']}),200)
+            data.append(account['user']['screen_name'])
+            writeData({ListInfluencersName: data})
+            account['user']['date_update'] = str(account['user']['date_update'])    
+            account['user']['time_update'] = str(account['user']['time_update'])
+            account['user']['join_time'] = str(account['user']['join_time'])   
+        return make_response(jsonify({"status_code": 200, "Influencer": account['user']}), 200)
     else:
-        return make_response(jsonify({"_status_code":404,"error":"Twits not found"}),404)
+        return make_response(jsonify({"_status_code": 404, "error": "User already exists!"}), 404)
+
 
 @app.route('/removeUserFromList/',methods=['POST','OPTIONS','GET'])
 def removeUserFromList():
@@ -370,89 +374,57 @@ def removeUserFromList():
 
 @app.route('/downloadFollowers/',methods=['POST','OPTIONS','GET'])
 def downloadFollowers():
-    # try:
-    #     ListInfluencersName = json.loads(request.data.decode('utf-8'))['ListInfluencersName']
-    # except:
-    #     logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
-    #     return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
+    try:
+        ListInfluencersName = json.loads(request.data.decode('utf-8'))['ListInfluencersName']
+    except:
+        logger.error('"_status_code": 422, "error": ["info":"incorrect POST-request"]')
+        return make_response(jsonify({"_status_code": 422, "error": {"info":"incorrect POST-request"}}), 422)
 
-    # data = readData()[ListInfluencersName]
+    data = readData()[ListInfluencersName]
 
-    # if len(data) != 0:
-    #     result = get_followers(api, data, ListInfluencersName)
-    #     if result['status_code'] != 200:
-    #         logger.error({"error": "result not found"})
-    #         return make_response(jsonify({"_status_code":422,"error":"accountName not found"}),422)
-    #     else:
-    #         return make_response(jsonify({"status_code":200}),200)
-    # else:
-    #     return make_response(jsonify({"_status_code": 404, "error": "Twits not found"}), 404)
-    return make_response(jsonify({"status_code":200}),200)
+    if len(data) != 0:
+        result = get_followers(api, data, ListInfluencersName)
+        if result['status_code'] != 200:
+            logger.error({"error": "result not found"})
+            return make_response(jsonify({"_status_code": 422, "error": "accountName not found"}), 422)
+        else:
+            return make_response(jsonify({"status_code": 200}), 200)
+    else:
+        return make_response(jsonify({"_status_code": 404, "error": "Twits not found"}), 404)
+
  
+
 @app.route('/downloadFullFollowers/',methods=['POST','OPTIONS','GET'])
 def downloadFullFollowers():
-    # try:
-    #     print(request.data.decode('utf-8'))
-    #     ListInfluencersName = json.loads(request.data.decode('utf-8'))['ListInfluencersName']
-    #     cross_count = json.loads(request.data.decode('utf-8'))['crossCount']
-    # except:
-    #     logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
-    #     return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
-    # print(ListInfluencersName)
-    # data = readData()[ListInfluencersName]
-    # print(data)
+    try:
+        ListInfluencersName = json.loads(request.data.decode('utf-8'))['ListInfluencersName']
+        cross_count = json.loads(request.data.decode('utf-8'))['crossCount']
+    except:
+        logger.error('"_status_code": 422, "error": ["info":"incorrect POST-request"]')
+        return make_response(jsonify({"_status_code": 422, "error": {"info": "incorrect POST-request"}}), 422)
 
-    # if len(data) != 0:
-    #     ids = []
-    #     for item in data:
-    #         id = api.get_user(screen_name=item).id
-    #         ids.append(id)
+    data = readData()[ListInfluencersName]
+    print(data)
 
-    #     result = followersCrossNames(ids, cross_count)
-    #     if result['status_code'] != 200:
-    #         logger.error({"error": "result not found"})
-    #         return make_response(jsonify({"_status_code": 422, "error": "accountName not found"}),422)
-    #     else:
-    #         followersCrossNamess = result['followersCrossNames']
-    #         if len(followersCrossNamess) != 0:
-    #             users = []
-    #             count = 0
-    #             for username in followersCrossNamess:
-    #                 ress = getFollowerInfoDB(username)
-    #                 if ress['status_code'] == 200:
-    #                     users.append(ress['Influencer'])
-    #                     count += 1
-    #                     if count == 10:
-    #                         print('ok')
-    #                         break
-    #                     print(f"{count}/{len(followersCrossNamess)}")
-                    # else:
-                        # users.append(getInfoAboutAccount(username,bd=True)['user'])
-                # print(users)
-                # return make_response(jsonify({"status_code":200,"ListInfluencersNames":users}),200)
-            # else:
-                # return make_response(jsonify({"_status_code":404,"error":"Twits not found"}),404)
+    if len(data) != 0:
+        ids = []
+        for item in data:
+            id = api.get_user(screen_name=item).id
+            ids.append(id)
 
-    # else:
-        # return make_response(jsonify({"_status_code": 404, "error": "Twits not found"}), 404)
-    all_followers = storage.read_all_followers()
-    followers = []
-    for i in range(len(all_followers)):
-        followers.append(
-            {
-                'username': all_followers[i][0],
-                'name': all_followers[i][1],
-                'profile_image_url': all_followers[i][2],
-                'tweets': all_followers[i][3],
-                'following': all_followers[i][4],
-                'followers': all_followers[i][5],
-                'likes': all_followers[i][6],
-                'media': all_followers[i][7],
-                'description': all_followers[i][8] 
-            }
-        )
+        result = followersCrossNames(ids, cross_count)
+        if result['status_code'] != 200:
+            logger.error({"error": "result not found"})
+            return make_response(jsonify({"_status_code": 422, "error": "accountName not found"}),422)
+        else:
+            followersCrossNamess = result['followersCrossNames']
+            if len(followersCrossNamess) != 0:
+                return make_response(jsonify({"status_code": 200, "ListInfluencersNames": followersCrossNamess}),200)
+            else:
+                return make_response(jsonify({"_status_code": 404, "error": "Followers doesn't exist"}), 404)
 
-    return make_response(jsonify({"status_code":200,"ListInfluencersNames":followers[0:250]}),200)
+    else:
+        return make_response(jsonify({"_status_code": 404, "error": "There are not users"}), 404)
 
 
 @app.route('/statTimeUpdate/',methods=['POST','OPTIONS','GET'])
@@ -473,8 +445,8 @@ def statTimeUpdate():
     # else:
     #     return make_response(jsonify({"_status_code":404,"error":"Twits not found"}),404)
 
-@app.route('/addGeofenceOnBoard/',methods=['POST','OPTIONS','GET'])
 
+@app.route('/addGeofenceOnBoard/',methods=['POST','OPTIONS','GET'])
 def addGeofenceOnBoard():
     try:
         center = json.loads(request.data.decode('utf-8'))['center']
@@ -482,15 +454,18 @@ def addGeofenceOnBoard():
     except:
         logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
         return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
+    print(center, type(center))
+
+    center = center.replace('(', '').replace(')', '').replace(' ', '').split(',')
     twits = getGeofenceTwits(center=center,radius=radius)
     if twits['status_code'] != 200:
         logger.error({"error": "Twits not found"})
         return make_response(jsonify({"_status_code":404,"error":"Twits not found"}),404)
     else:
         return make_response(jsonify({"status_code":200,"twits":twits['twits']}),200) #twits['twits']
- 
-@app.route('/addListCa/',methods=['POST','OPTIONS','GET'])
 
+
+@app.route('/addListCa/',methods=['POST','OPTIONS','GET'])
 def addListCa():
     try:
         NewListCaName = json.loads(request.data.decode('utf-8'))['NewListCaName']
@@ -502,9 +477,9 @@ def addListCa():
     writeData({NewListCaName:CaNames},"./data/ca.json")
     return make_response(jsonify({"_status_code":200}),200)
 
+
 # Analitica page
 @app.route('/ListCa/',methods=['POST','OPTIONS','GET'])
-
 def ListCa():
     try:
         ListCaName = json.loads(request.data.decode('utf-8'))['ListCaName'] 
@@ -513,27 +488,19 @@ def ListCa():
         logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
         return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
     data = readData(name='./data/ca.json')[ListCaName]
-    print(type(data))
-    print(data)
-    print(len(data))
 
-    Ca = []
+    for ca_user in data:
+        print('ca_user:', ca_user)
+        twitter.get_last_tweets(api, ca_user, stat_twit_count)
+
     if len(data) != 0:
-        # for user in data:
-            # req = getUserInfoDB(user)
-            # if req['status_code'] == 200:
-                # Ca.append(req['Influencer'])
-        print("stat_twit_count: ", stat_twit_count)
-        answer = newGetTwitsEntity(data,stat_twit_count)
-    # print(len(Ca))
-    if False:# if twits['status_code'] != 200:
-        logger.error({"error": "Twits not found"})
-        return make_response(jsonify({"_status_code":404,"error":"Twits not found"}),404)
+        answer = newGetTwitsEntity(data, stat_twit_count)
+        return make_response(jsonify({"status_code": 200 ,"Ca": answer}), 200)
     else:
-        return make_response(jsonify({"status_code":200,"Ca":answer}),200)
+        return make_response(jsonify({"status_code": 404, "error": "There are not ca"}), 200)
+
 
 @app.route('/getCountCaInList/',methods=['POST','OPTIONS','GET'])
-
 def getCountCaInList():
     try:
         ListCaName = json.loads(request.data.decode('utf-8'))['ListCaName']
@@ -542,22 +509,18 @@ def getCountCaInList():
         return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
     data = readData(name='./data/ca.json')[ListCaName]
     CountCaInList = len(data)
-    # print(len(Ca))
-    if False:# if twits['status_code'] != 200:
-        logger.error({"error": "Twits not found"})
-        return make_response(jsonify({"_status_code":404,"error":"Twits not found"}),404)
-    else:
-        return make_response(jsonify({"status_code":200,"CountCaInList":CountCaInList}),200)
+
+    return make_response(jsonify({"status_code":200,"CountCaInList":CountCaInList}),200)
 
 
 @app.route('/logs/',methods=['POST','OPTIONS','GET'])
-
 def getLogs():
     path = os.path.join(os.getcwd(),"data","app.json")
     print(path)
     logs = readDataLogs(path)
     return make_response(jsonify({"logs":logs}),200)
     #return send_file(path,mimetype="application/json",as_attachment=False)
+
 
 def readDataLogs(path):
     logs = {}
@@ -567,6 +530,7 @@ def readDataLogs(path):
         data = json.loads(log)
         logs.update({f"{convertTime(data['time'])}":data})
     return(logs)
+
 
 def convertTime(string):
     datetime_object = datetime.strptime(string, '%Y-%m-%dT%H:%M:%S.%f')

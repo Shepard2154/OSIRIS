@@ -61,7 +61,7 @@ addGeofenceTwit = function (person) {
               hover:text-brand-dark" name="" rel="noopener noreferrer" target="_blank">${person['nlikes']}</a><span class="text-gray-500
               ">Ретвиты:</span><a id="" class=" mr-3 text-brand font-semibold 
               hover:text-brand-dark" name="" rel="noopener noreferrer" target="_blank">${person['nretweets']}</a><span class="text-gray-500
-              ">Цитаты:</span><a id="" class=" mr-3 text-brand font-semibold 
+              ">Цитата:</span><a id="" class=" mr-3 text-brand font-semibold 
               hover:text-brand-dark" name="" rel="noopener noreferrer" target="_blank">${person['nreplies']}</a></div>
             <div aria-describedby="tooltip:10" data-reach-tooltip-trigger="" class="flex flex-row mr-3">${hashtags}</div>
           </div>

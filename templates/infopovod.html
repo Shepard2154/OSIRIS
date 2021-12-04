@@ -1,8 +1,6 @@
-﻿<!DOCTYPE html>
-<html style="font-family: FontAwesome;"  lang="en">
-
+﻿{% extends "base.html" %}
+{% block content %}
   <head>
-    
     <style type="text/css">
     
     svg:not(:root).svg-inline--fa {
@@ -493,7 +491,7 @@
     .fad.fa-inverse {
       color: #fff;
     }
-  </style>
+    </style>
 
     <link rel="apple-touch-icon" sizes="180x180"
       href="../static/images/apple-touch-icon.png">
@@ -537,8 +535,7 @@
       Recognition System">
     <meta property="og:type" content="website">
     <meta property="og:url" content="/">
-    <title>Open Source Intelligence аnd Recognition System | osiris</title>
-    <!-- <style href="/../static/css/2.7d8cb3b4.chunk.css"></style> -->
+    <title>OSIRIS</title>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link href="../static/css/main.6f70e7c3.chunk.css" rel="stylesheet"
       type="text/css">
@@ -546,195 +543,132 @@
       type="text/css">
       <link href="../static/css/dragDrop.css" rel="stylesheet"
       type="text/css">
-    <!-- <link href="../static/css/animation.css" rel="stylesheet" type="text/css"> -->
   </head>
 
   <body>
-    <div class="area"></div><nav class="main-menu uppercase text-gray-800">
-      <ul>
-        <li>
-          <a href="/">
-            <i class="fa fa-user fa-2x"></i> 
-            <span class="nav-text">
-              Персоны
-            </span>
-          </a>
-
-        </li>
-        <li class="has-subnav">
-          <a href="/ca/">
-            <i class="fa fa-search fa-2x"></i>
-            <span class="nav-text">
-              Поиск ЦА
-            </span>
-          </a>
-
-        </li>
-        <li class="has-subnav">
-          <a href="/analitica/">
-            <i class="fa fa-bar-chart-o fa-2x"></i>
-            <span class="nav-text">
-              Аналитика
-            </span>
-          </a>
-
-        </li>
-        <li class="has-subnav">
-          <a href="/geofence/">
-            <i class="fa fa-map-o fa-2x"></i>
-            <span class="nav-text">
-              Геофенсинг
-            </span>
-          </a>
-
-        </li>
-        <li>
-          <a href="/infopovod/">
-            <i class="fa fa-info fa-2x"></i>
-            <span class="nav-text">
-              Инфоповоды
-            </span>
-          </a>
-        </li>
-      </ul>
-
-      <ul class="logout">
-        <li>
-          <a href="/logout/">
-            <i class="fa fa-sign-out fa-2x"></i>
-            <span class="nav-text">
-              Выход
-            </span>
-          </a>
-        </li>
-      </ul>
-    </nav>
     <style>
     @import url(//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css);
+    .fa-2x {
+    font-size: 2em;
+    }
+    .fa {
+    position: relative;
+    display: table-cell;
+    width: 60px;
+    height: 36px;
+    text-align: center;
+    vertical-align: middle;
+    font-size:20px;
+    }
 
 
-.fa-2x {
-font-size: 2em;
-}
-.fa {
-position: relative;
-display: table-cell;
-width: 60px;
-height: 36px;
-text-align: center;
-vertical-align: middle;
-font-size:20px;
-}
+    .main-menu:hover,nav.main-menu.expanded {
+    width:250px;
+    overflow:visible;
+    }
 
+    .main-menu {
+    background: #fff;
+    border-right:1px solid #e5e5e5;
+    position: fixed;
+    top:4rem;
+    bottom:0;
+    /* height:100%; */
+    left:0;
+    width:60px;
+    overflow:hidden;
+    -webkit-transition:width .05s linear;
+    transition:width .05s linear;
+    -webkit-transform:translateZ(0) scale(1,1);
+    z-index:1000;
+    }
 
-.main-menu:hover,nav.main-menu.expanded {
-width:250px;
-overflow:visible;
-}
+    .main-menu>ul {
+    margin:7px 0;
+    }
 
-.main-menu {
-background: #fff;
-border-right:1px solid #e5e5e5;
-position: fixed;
-top:4rem;
-bottom:0;
-/* height:100%; */
-left:0;
-width:60px;
-overflow:hidden;
--webkit-transition:width .05s linear;
-transition:width .05s linear;
--webkit-transform:translateZ(0) scale(1,1);
-z-index:1000;
-}
+    .main-menu li {
+    position:relative;
+    display:block;
+    width:250px;
+    }
 
-.main-menu>ul {
-margin:7px 0;
-}
+    .main-menu li>a {
+    position:relative;
+    display:table;
+    border-collapse:collapse;
+    border-spacing:0;
+    /* color:#999; */
+    font-family: arial;
+    font-size: 14px;
+    text-decoration:none;
+    -webkit-transform:translateZ(0) scale(1,1);
+    -webkit-transition:all .1s linear;
+    transition:all .1s linear;
+      
+    }
 
-.main-menu li {
-position:relative;
-display:block;
-width:250px;
-}
+    .main-menu .nav-icon {
+    position:relative;
+    display:table-cell;
+    width:60px;
+    height:36px;
+    text-align:center;
+    vertical-align:middle;
+    font-size:18px;
+    }
 
-.main-menu li>a {
-position:relative;
-display:table;
-border-collapse:collapse;
-border-spacing:0;
-/* color:#999; */
- font-family: arial;
-font-size: 14px;
-text-decoration:none;
--webkit-transform:translateZ(0) scale(1,1);
--webkit-transition:all .1s linear;
-transition:all .1s linear;
-  
-}
+    .main-menu .nav-text {
+    position:relative;
+    display:table-cell;
+    vertical-align:middle;
+    width:190px;
+      font-family: 'Titillium Web', sans-serif;
+    }
 
-.main-menu .nav-icon {
-position:relative;
-display:table-cell;
-width:60px;
-height:36px;
-text-align:center;
-vertical-align:middle;
-font-size:18px;
-}
+    .main-menu>ul.logout {
+    position:absolute;
+    left:0;
+    bottom:0;
+    }
 
-.main-menu .nav-text {
-position:relative;
-display:table-cell;
-vertical-align:middle;
-width:190px;
-  font-family: 'Titillium Web', sans-serif;
-}
+    .no-touch .scrollable.hover {
+    overflow-y:hidden;
+    }
 
-.main-menu>ul.logout {
-position:absolute;
-left:0;
-bottom:0;
-}
+    .no-touch .scrollable.hover:hover {
+    overflow-y:auto;
+    overflow:visible;
+    }
 
-.no-touch .scrollable.hover {
-overflow-y:hidden;
-}
+    a:hover,a:focus {
+    text-decoration:none;
+    }
 
-.no-touch .scrollable.hover:hover {
-overflow-y:auto;
-overflow:visible;
-}
+    nav {
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    -o-user-select:none;
+    user-select:none;
+    }
 
-a:hover,a:focus {
-text-decoration:none;
-}
-
-nav {
--webkit-user-select:none;
--moz-user-select:none;
--ms-user-select:none;
--o-user-select:none;
-user-select:none;
-}
-
-nav ul,nav li {
-outline:0;
-margin:0;
-padding:0;
-}
-.main-menu li:hover>a,nav.main-menu li.active>a,.dropdown-menu>li>a:hover,.dropdown-menu>li>a:focus,.dropdown-menu>.active>a,.dropdown-menu>.active>a:hover,.dropdown-menu>.active>a:focus,.no-touch .dashboard-page nav.dashboard-menu ul li:hover a,.dashboard-page nav.dashboard-menu ul li.active a {
-color:#fff;
-background-color:#219bf2;
-}
-.area {
-float: left;
-background: #e2e2e2;
-width: 100%;
-height: 100%;
-}
-
-  </style>
+    nav ul,nav li {
+    outline:0;
+    margin:0;
+    padding:0;
+    }
+    .main-menu li:hover>a,nav.main-menu li.active>a,.dropdown-menu>li>a:hover,.dropdown-menu>li>a:focus,.dropdown-menu>.active>a,.dropdown-menu>.active>a:hover,.dropdown-menu>.active>a:focus,.no-touch .dashboard-page nav.dashboard-menu ul li:hover a,.dashboard-page nav.dashboard-menu ul li.active a {
+    color:#fff;
+    background-color:#219bf2;
+    }
+    .area {
+    float: left;
+    background: #e2e2e2;
+    width: 100%;
+    height: 100%;
+    }
+    </style>
 
     <main class="bg-gray-300" id="root" style="min-width:520px"><button
         class="fixed bottom-0 right-0 p-4 z-20 inline-flex justify-center
@@ -864,48 +798,6 @@ height: 100%;
           </section>
         </div>
       </div>
-      <footer class="bg-white py-8 mt-8 lg:mt-16 w-full">
-        <div class="container mx-auto px-4">
-
-          <nav class="flex flex-col sm:flex-row justify-between w-full mt-4">
-            <div class="mb-2 w-full">
-              <p class="uppercase text-gray-400 font-medium text-lg sm:mb-2">You</p>
-              <ul class="text-xs mb-3">
-                <li class="inline-block mr-2 sm:block sm:mr-0"><a
-                    href="/account/"><button
-                      class="text-gray-800 hover:text-brand text-lg"
-                      type="button">My Account</button></a></li>
-                <li class="mt-2 inline-block mr-2 sm:block sm:mr-0"><a
-                    href="/logout/"><button
-                      class="text-gray-800 hover:text-brand text-lg"
-                      type="button">Sign Out</button></a></li>
-              </ul>
-            </div>
-            <div class="w-full">
-            </div>
-            <div class="w-full">
-            </div>
-            <div class="w-full">
-              <p class="uppercase text-gray-400 font-medium text-lg sm:mb-2">We</p>
-              <ul class="text-xs mb-3">
-                <li class="mt-2 inline-block mr-2 sm:block sm:mr-0"><a
-                    href="/about/"><button
-                      class="text-gray-800 hover:text-brand text-lg"
-                      type="button">About</button></a></li>
-                <li class="mt-2 inline-block mr-2 sm:block sm:mr-0"><a
-                    href="/contact/"><button
-                      class="text-gray-800 hover:text-brand text-lg"
-                      type="button">Contact</button></a></li>
-              </ul>
-              <div class="text-lg">Si vis pacem, para bellum. <a
-                  href="https://www.github.com/useruser"
-                  rel="noopener noreferrer" target="_blank" title="useruser's
-                  Github Profile"><span
-                    class="text-gray-800 hover:text-brand">@useruser</span></a></div>
-            </div>
-          </nav>
-        </div>
-      </footer>
     </main>
     <div id="modals"></div>
     <div id="portal"></div>
@@ -915,33 +807,8 @@ height: 100%;
       style="position: absolute; top: -999px; opacity: 0; pointer-events: none;
       box-sizing: border-box; left: -999px;">
       <input id="untilTwits" hidden>
-      <!-- <input id="untilTwitsToBoard"></div> -->
-      <input id="untilTwitsToBoard" hidden></div> 
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/analyzze.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartAnswers.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartClient.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartDayOfWeek.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartHash.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartheatmap.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartLang.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartQuotes.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartRetweet.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartt.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartTypeTwit.js"></script> -->
-    <!--===============================================================================================-->
-    <!-- <script src="../static/js/chartUrl.js"></script> -->
-    <!--===============================================================================================-->
+      <input id="untilTwitsToBoard" hidden></div>
+
     <script src="../static/js/getTwits.js"></script>
     <!--===============================================================================================-->
     <script src="../static/vendor/jquery/jquery-3.2.1.min.js"></script>
@@ -956,4 +823,4 @@ height: 100%;
     <!--===============================================================================================-->
   </body>
 
-</html>
+{% endblock %}
