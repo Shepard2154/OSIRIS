@@ -1,11 +1,13 @@
 downloadFullFollowers = function(){
     var selection = document.getElementById('selection123')
     var crossCount = $('#stat_cross_count').html()
-    // alert(crossCount)
-    // alert(crossCount.value)
-    // alert(crossCount.html())
+    var start_person = $('#start_person').val()
+    var end_person = $('#end_person').val()
+
+    console.log('downloadFullFolllowers - start ', start_person, end_person)
+
     if (selection.value != "Выберите группу") {
-        datta = String('{"ListInfluencersName":"'+selection.value+'","crossCount":"'+crossCount+'"}')
+        datta = String('{"ListInfluencersName":"'+selection.value+'","crossCount":"'+crossCount+'", "start_person":"'+start_person+'", "end_person":"'+end_person+'"}')
         $.ajax({
             type: "POST",
             url: "/downloadFullFollowers/",
@@ -14,30 +16,30 @@ downloadFullFollowers = function(){
             data: datta,
             timeout:1500000000,
             success: function(msg) {
-                $("#caBoard").html("")
                 $("#fullFollowers").attr("style","visibility: true;")
-                // alert("all_good")
                 sizze = Object.keys(msg.ListInfluencersNames).length
                 if (sizze > 0) {
                     for (var i = 0; i < sizze; i++) {
                         addCAuserOnBoard(msg.ListInfluencersNames[i]);
-                  // alert('oke__________ke')
                     }
                 }
+
+                $('#start_person').val(parseInt(start_person) + 20)
+                $('#end_person').val(parseInt(end_person) + 20)
+                console.log('downloadFullFolllowers - end ', $('#start_person').val(), $('#end_person').val())
             },
             error: function(msg) {
-                // $("#login").attr("style","color:red")
-                // $("#password").attr("style","color:red")
-                alert('bad request')
+                if (msg.responseJSON.error == "Followers don't exist") alert('Подписчики закончились!')
+                else alert('bad request')
             },
             beforeSend: function(){
-              $("#overlay").fadeIn(300);
+              $("#overlay").fadeIn(300)
               disableScroll()
           },
          complete: function(){
-          $("#overlay").fadeOut(300);
+          $("#overlay").fadeOut(300)
           enableScroll()
          }
-          });
+          })
        }
     }

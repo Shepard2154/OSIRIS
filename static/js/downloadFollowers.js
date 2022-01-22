@@ -12,10 +12,12 @@ downloadFollowers = function(){
             success: function(msg) {
                 $("#filterFollowers").attr("style","visibility: true;")
                 alert("all_good")
+
+                $('#start_person').val(0)
+                $('#end_person').val(20)
+                console.log('donwloadFollowers - start of all', $('#start_person').val(), typeof($('#start_person').val()), $('#end_person').val())
             },
             error: function(msg) {
-                // $("#login").attr("style","color:red")
-                // $("#password").attr("style","color:red")
                 console.log(msg)
                 alert('bad request')
             },

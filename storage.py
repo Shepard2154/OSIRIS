@@ -240,7 +240,7 @@ def read_last_tweet(screen_name):
     connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f"""
-    SELECT MAX(id) FROM tweet WHERE screen_name='{screen_name.replace('@', '')}'
+    SELECT MAX(id) FROM tweet WHERE screen_name='{screen_name}'
     """
     cursor.execute(query)
     data = cursor.fetchall()

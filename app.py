@@ -117,7 +117,8 @@ def getDocuments():
 @app.route("/ca/",methods=['POST','OPTIONS','GET'])
 @flask_login.login_required
 def getCa():
-    return render_template('ca.html')
+    list_influencers = list(readData().keys())
+    return render_template('ca.html', list_influencers=list_influencers)
 
 
 @app.route("/analitica/",methods=['POST','OPTIONS','GET'])
@@ -126,6 +127,7 @@ def getAnalitica():
     try:
         ca_categories = readData(name='./data/ca.json').keys()
     except:
+        ca_categories = ''
         ca_categories = ''
     return render_template('analitica.html', CaListNames=ca_categories)
 
@@ -238,7 +240,6 @@ def getInfoAboutTwitterAccountName():
         retweet_screen_names = twitter.get_tweet_retweet_screen_name(twitterAccountName)
         if quotes_screen_name['status_code'] == 200:
             user_info.update({"retweet_screen_names": retweet_screen_names['retweet_screen_names'], "retweet_screen_name_count": retweet_screen_names["retweet_screen_name_count"]})   
-
         return make_response(jsonify(user_info), 200)
 
 
@@ -263,6 +264,28 @@ def addDopMessage():
     else:
         return make_response(jsonify({"TwitsToBoard":TwitsToBoard['TwitsToBoard'],"status_code":200}),200)
 
+
+@app.route('/addDopPerson/', methods=['POST','OPTIONS','GET'])
+def addDopPerson():
+    try:
+        twitterAccountName = json.loads(request.data.decode('utf-8'))['accountName']
+        number = json.loads(request.data.decode('utf-8'))['created_at']
+    except:
+        logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
+        return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
+
+    if not created_at:
+        created_at = datetime.now()
+
+    TwitsToBoard = getTwitsToBoard(api, twitterAccountName, created_at)
+
+    if TwitsToBoard['status_code'] != 200:
+        logger.error({"error": "TwitsToBoard not found"})
+        return make_response(jsonify({"_status_code":404,"error":"TwitsToBoard not found"}),404)
+    else:
+        return make_response(jsonify({"TwitsToBoard":TwitsToBoard['TwitsToBoard'],"status_code":200}),200)
+
+
 @app.route('/getTwits/',methods=['POST','OPTIONS','GET'])
 def getTwitss():
     try:
@@ -274,12 +297,13 @@ def getTwitss():
     except:
         logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
         return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
-    twits = twitter.get_all_tweets(api, twitterAccountName, since, until)
+    # twits = twitter.get_all_tweets(api, twitterAccountName, since, until)
+    twits = twitter.get_next_tweets(api, twitterAccountName)
     if twits['status_code'] != 200:
         logger.error({"error": "Twits not found"})
-        return make_response(jsonify({"_status_code":404,"error":"Twits not found"}),404)
+        return make_response(jsonify({"_status_code": 404, "error": "Twits not found"}), 404)
     else:
-        return make_response(jsonify({"status_code":200}),200)
+        return make_response(jsonify({"status_code": 200}), 200)
 
 
 @app.route('/addNewListInfluencers/',methods=['POST','OPTIONS','GET'])
@@ -399,6 +423,10 @@ def downloadFullFollowers():
     try:
         ListInfluencersName = json.loads(request.data.decode('utf-8'))['ListInfluencersName']
         cross_count = json.loads(request.data.decode('utf-8'))['crossCount']
+        start_person = json.loads(request.data.decode('utf-8'))['start_person']
+        end_person = json.loads(request.data.decode('utf-8'))['end_person']
+
+        print(start_person, end_person)
     except:
         logger.error('"_status_code": 422, "error": ["info":"incorrect POST-request"]')
         return make_response(jsonify({"_status_code": 422, "error": {"info": "incorrect POST-request"}}), 422)
@@ -412,7 +440,7 @@ def downloadFullFollowers():
             id = api.get_user(screen_name=item).id
             ids.append(id)
 
-        result = followersCrossNames(ids, cross_count)
+        result = followersCrossNames(ids, start_person, end_person, cross_count)
         if result['status_code'] != 200:
             logger.error({"error": "result not found"})
             return make_response(jsonify({"_status_code": 422, "error": "accountName not found"}),422)
@@ -421,7 +449,7 @@ def downloadFullFollowers():
             if len(followersCrossNamess) != 0:
                 return make_response(jsonify({"status_code": 200, "ListInfluencersNames": followersCrossNamess}),200)
             else:
-                return make_response(jsonify({"_status_code": 404, "error": "Followers doesn't exist"}), 404)
+                return make_response(jsonify({"_status_code": 404, "error": "Followers don't exist"}), 404)
 
     else:
         return make_response(jsonify({"_status_code": 404, "error": "There are not users"}), 404)

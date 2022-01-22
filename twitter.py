@@ -97,6 +97,43 @@ def get_last_tweets(api, screen_name, count=200):
     return ({"status_code": 200})
 
 
+def get_next_tweets(api, screen_name):
+    all_tweets = []
+
+    oldest_id = storage.read_last_tweet(screen_name)[0][0]
+
+    tweets = None
+    while True:
+        try:
+            tweets = api.user_timeline(screen_name=screen_name, count=200, max_id=oldest_id-1, tweet_mode = 'extended')
+        except tweepy.errors.Unauthorized:
+            pass
+    
+        if tweets != None:
+            if len(tweets) == 0:
+                return ({"status_code": 404})
+        
+        all_tweets.extend(tweets)
+        
+        if len(all_tweets) == 200:
+            break 
+
+    for tweet in all_tweets:
+        quote_screen_name = ''
+        retweete_screen_name = ''
+
+        try: quote_screen_name = api.get_status(id=tweet.quoted_status_id).user.screen_name
+        except Exception: pass
+
+        try: retweete_screen_name = tweet.retweeted_status.user.screen_name
+        except Exception: pass
+
+        storage.create_tweet(tweet, quote_screen_name=quote_screen_name, retweete_screen_name=retweete_screen_name)
+
+    print(tweets[0].id)
+    return ({"status_code": 200})
+
+
 def save_tweets_csv(screen_name, tweets):
     with open(f'new_{screen_name}_tweets.csv', 'w') as f:
         writer = csv.writer(f)
@@ -184,7 +221,7 @@ def followersCross(ListInfluencersName, cross_count=1):
     return len(common_followers_id)
 
 
-def followersCrossNames(ids, cross_count=1):
+def followersCrossNames(ids, start_person, end_person, cross_count=1):
     start_time = time.time()
 
     followers = []
@@ -192,11 +229,19 @@ def followersCrossNames(ids, cross_count=1):
     if len(common_followers_id) == 0:
         return ({'status_code': 404})
 
-    count = 0
+    count = int(start_person)
+    print(start_person, end_person)
+    print(type(start_person), type(end_person))
 
-    for i in range(0, len(common_followers_id)):
+    if int(start_person) >= len(common_followers_id):
+        return({'followersCrossNames': [], 'status_code': 200})
+
+    for i in range(int(start_person), int(end_person)):
         count += 1
         
+        if i == len(common_followers_id):
+            return({'followersCrossNames': followers, 'status_code': 200})
+
         follower = None
         try:
             follower = api.get_user(user_id=common_followers_id[i][0])
@@ -224,10 +269,6 @@ def followersCrossNames(ids, cross_count=1):
                 'profile_image_url': follower.profile_image_url,
                 'description': follower.description
             }
-            if len(followers) < 500:
-                followers.append(follower_info)
-            else:
-                break
 
         print(f"{count}/{len(common_followers_id)}")
         
@@ -256,7 +297,7 @@ def get_followers(api, users, ListInfluencersName):
                     print("End of work ", StopIteration)
                     break
 
-                for follower_id in page: 
+                for follower_id in page:
                     storage.create_follower(user_id, follower_id)
 
         except Exception as e:
@@ -345,6 +386,7 @@ def getCountTwits(username):
     else:
         return({"countTwits":it,"status_code":200})
 
+
 def charttUpdate(screen_name):
     data = storage.read_tweets_created_at(screen_name)
     all_data = []
@@ -357,6 +399,7 @@ def charttUpdate(screen_name):
         return ({"status_code": 404})
     else:
         return({"charttDay": list(dates.keys()), "charttCount": list(dates.values()), "status_code": 200})
+
 
 def chartWeekday(screen_name):
     data = storage.read_tweets_created_at(screen_name)
@@ -483,13 +526,16 @@ def getTwitsToBoard(api, screen_name, created_at=datetime.now()):
     else:
         return({"TwitsToBoard": "Not founded tweets!", "status_code": 404})
 
+
 def convertTime2(string):
     datetime_object = datetime.strptime(string, '%Y-%m-%d')
     return(datetime.strftime(datetime_object,"%d-%m-%Y"))
 
+
 def convertTime3(string):
     datetime_object = datetime.strptime(string,"%d-%m-%Y")
     return(datetime.strftime(datetime_object,'%Y-%m-%d'))
+
 
 def getUrlHost(url):
     parsed_uri = urlparse(url)
@@ -665,7 +711,6 @@ def getGeofenceTwits(center=None, radius=None, keyword='*'):
 
         if len(df) == 100:
                 break
-
     return ({"status_code":200,"twits":twits})
 
 

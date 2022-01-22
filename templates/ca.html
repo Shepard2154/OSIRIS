@@ -786,15 +786,15 @@
                 <p>
                   <select id="selection123" class="turnintodropdown_demo2">
                     <option>Выберите группу</option>
-                      <option>Польские деятели</option>
-                      <option>Американские деятели</option>
-                      <option>Российская оппозиция</option>
+                    {% for group in list_influencers %}
+                      <option>{{ group }}</option>>
+                    {% endfor %}
                   </select>
                 </p>
               </form>
           <button id="addNewList"  class="h-auto bg-gray-200 h-10 px-4
             py-2 rounded-r-lg
-            hover:bg-gray-400" style="margin: 10px; padding: 11px; border-radius: .5rem; color:#777" onclick="false">+</button></div> 
+            hover:bg-gray-400" style="margin: 10px; padding: 11px; border-radius: .5rem; color:#777" onclick="addNewListInfluencers()">+</button></div> 
               <div class="p-2">
                 <div id="messageBoard" class="flex flex-col md:flex-row
                   md:flex-wrap items-center
@@ -866,6 +866,7 @@
                 rounded" type="button">Обработать</button></div>
             </div>
           </section>
+
           <section  id='fullFollowers' class="flex flex-col lg:flex-row mb-2 lg:mb-4 mt-2" style="visibility: hidden;">
             <div class="lg:mt-0 lg:w-full mx-2 h-auto bg-white rounded-lg shadow
               relative p-4 mt-4"
@@ -875,12 +876,19 @@
                   md:flex-wrap items-center
                   md:items-start">
                 </div>
+
+                <button
+                    onclick="downloadFullFollowers()"
+                    class="hover:bg-brand-dark px-4 py-2 bg-brand text-gray-100
+                    rounded" type="button">Показать ещё</button>
+
                 <form class="flex h-16 items-center ml-4" style="justify-content: center;" onsubmit="return false">
                   <div class="relative text-gray-400 flex items-center
                     focus-within:text-brand">
                     <input id="ListCaName" class="bg-gray-200 h-10 pr-4 pl-8 font-medium rounded-l-lg
                       text-md focus:outline-none border-r text-gray-900" placeholder="Введите название для ЦА" type="search" value="" style="padding-bottom: 1px;">
-                  </div><button id="addUserTo" class="h-auto bg-gray-200 h-10 px-4
+                  </div>
+                  <button id="addUserTo" class="h-auto bg-gray-200 h-10 px-4
                     py-2 rounded-r-lg
                     hover:bg-gray-400" onclick="addListCa()">Сохранить ЦА</button>
                 </form>
@@ -898,6 +906,8 @@
       box-sizing: border-box; left: -999px;">
       <input id="untilTwits" hidden>
       <input id="untilTwitsToBoard" hidden></div>
+      <input id="start_person" hidden>
+      <input id="end_person" hidden>
     <!--===============================================================================================-->
     <script src="../static/vendor/jquery/jquery-3.2.1.min.js"></script>
     <!--===============================================================================================-->
@@ -929,7 +939,7 @@
     <!--===============================================================================================-->
     <script src="../static/js/downloadFullFollowers.js"></script>
     <!--===============================================================================================-->
-
+    <script src="../static/js/removeCAuser.js"></script>
 
 
   </body>

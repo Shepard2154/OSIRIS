@@ -40,10 +40,10 @@ addCAuserOnBoard = function (person) {
                               hover:text-brand-dark" rel="noopener noreferrer" target="_blank">${person['listed_count']}</a><span class="text-gray-500
                               ">Списки</span></div>
                           <p id="acc_bio" class="break-words leading-tight" style="padding: 15px;">${person['description']}</p>
-                              <button onclick="false" onmouseover="this.style.backgroundColor='#AB0606';" onmouseout="this.style.backgroundColor='lightcoral';" style="border-radius:100px; padding-top:4px; padding-bottom:4px; padding-left:10px; padding-right:10px; font-family:revert; margin-left:10px; align-content: space-around;
+                              <button onmouseover="this.style.backgroundColor='#AB0606';" onmouseout="this.style.backgroundColor='lightcoral';" style="border-radius:100px; padding-top:4px; padding-bottom:4px; padding-left:10px; padding-right:10px; font-family:revert; margin-left:10px; align-content: space-around;
                                background-color: lightcoral;" class="shadow-inner absolute inline-flex justify-center
                           items-baseline text-sm mr-2 px-2 rounded top-0
-                          right-0 text-white ml-4 bg-teal-600">X</button>
+                          right-0 text-white ml-4 bg-teal-600" onclick="removeCAFromList(${person['screen_name']})">X</button>
                         </div>
                       </div>
                     </div>

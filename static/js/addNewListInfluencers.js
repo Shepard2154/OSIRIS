@@ -11,16 +11,10 @@ addNewListInfluencers = function() {
             dataType: "json",
             data: datta,
             success: function(msg) {
-                // window.location.replace("/");
-                //$(".dropdownhidden_demo2").html($(".dropdownhidden_demo2").html()+"<li><a href='#'>"+NewListInfluencersName+"</a></li>")
-                
                 alert(msg.ListsInfluencers)
-                // $("#analyzeButton").click()
-                // alert('success_data_load')
+                document.location.reload();
             },
             error: function(msg) {
-                // $("#login").attr("style","color:red")
-                // $("#password").attr("style","color:red")
                 alert('bad request')
             }
           });
