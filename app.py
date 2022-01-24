@@ -2,6 +2,7 @@ import datetime as dt
 import logging
 import os
 import subprocess
+import time
 from datetime import datetime
 
 import flask
@@ -398,6 +399,7 @@ def removeUserFromList():
 @app.route('/downloadFollowers/',methods=['POST','OPTIONS','GET'])
 def downloadFollowers():
     try:
+        start_time = time.time()
         ListInfluencersName = json.loads(request.data.decode('utf-8'))['ListInfluencersName']
     except:
         logger.error('"_status_code": 422, "error": ["info":"incorrect POST-request"]')
@@ -411,6 +413,7 @@ def downloadFollowers():
             logger.error({"error": "result not found"})
             return make_response(jsonify({"_status_code": 422, "error": "accountName not found"}), 422)
         else:
+            print(f"app.py downloadFollowers--- {time.time() - start_time} seconds ---")
             return make_response(jsonify({"status_code": 200}), 200)
     else:
         return make_response(jsonify({"_status_code": 404, "error": "Twits not found"}), 404)
@@ -531,6 +534,7 @@ def addListCa():
 @app.route('/ListCa/',methods=['POST','OPTIONS','GET'])
 def ListCa():
     try:
+        start_time = time.time()
         ListCaName = json.loads(request.data.decode('utf-8'))['ListCaName'] 
         stat_twit_count = json.loads(request.data.decode('utf-8'))['stat_twit_count'] 
     except:
@@ -539,11 +543,12 @@ def ListCa():
     data = readData(name='./data/ca.json')[ListCaName]
 
     for ca_user in data:
-        print('ca_user:', ca_user)
+        print('app.py ListCa() ca_user:', ca_user)
         twitter.get_last_tweets(api, ca_user, stat_twit_count)
 
     if len(data) != 0:
         answer = newGetTwitsEntity(data, stat_twit_count)
+        print(f"--- {time.time() - start_time} seconds ---")
         return make_response(jsonify({"status_code": 200 ,"Ca": answer}), 200)
     else:
         return make_response(jsonify({"status_code": 404, "error": "There are not ca"}), 200)

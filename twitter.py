@@ -6,6 +6,7 @@ import re
 from collections import Counter
 from datetime import datetime
 from io import StringIO
+from tracemalloc import start
 from urllib.parse import urlparse
 
 import ast
@@ -44,7 +45,11 @@ def get_all_tweets(api, screen_name, since, until=str(datetime.now().date())):
             tweets = api.user_timeline(screen_name=screen_name, count=200, max_id=oldest_id-1, tweet_mode = 'extended')
         except tweepy.errors.Unauthorized:
             pass
-        
+        except tweepy.errors.TooManyRequests as e1:
+            print(e1)
+            time.sleep(60*15)
+            tweets = api.user_timeline(screen_name=screen_name, count=200, max_id=oldest_id-1, tweet_mode = 'extended')
+
         if tweets != None:
 
             if len(tweets) == 0:
@@ -82,6 +87,10 @@ def get_last_tweets(api, screen_name, count=200):
         tweets = api.user_timeline(screen_name=screen_name, count=count, tweet_mode = 'extended')
     except tweepy.errors.Unauthorized:
         return ({"status_code": 401})
+    except tweepy.errors.TooManyRequests as e1:
+            print(e1)
+            time.sleep(60*15)
+            tweets = api.user_timeline(screen_name=screen_name, count=count, tweet_mode = 'extended')
 
     if not tweets:
         return ({"status_code": 404})
@@ -218,6 +227,7 @@ def followersCrossNames(ids, start_person, end_person, cross_count=1):
     print(type(start_person), type(end_person))
 
     if int(start_person) >= len(common_followers_id):
+        print('followersCrossNames', int(start_person) > len(common_followers_id))
         return({'followersCrossNames': [], 'status_code': 200})
 
     for i in range(int(start_person), int(end_person)):
@@ -253,16 +263,16 @@ def followersCrossNames(ids, start_person, end_person, cross_count=1):
                 'profile_image_url': follower.profile_image_url,
                 'description': follower.description
             }
-
-        print(f"{count}/{len(common_followers_id)}")
+            followers.append(follower_info)
+        print(f"{time.time() - start_time} {count}/{len(common_followers_id)}")
         
-    print(f"--- {time.time() - start_time} seconds ---")
+    print(f"twitter.py followersCrossNames--- {time.time() - start_time} seconds ---")
     return({'followersCrossNames': followers, 'status_code': 200})
 
 
 def get_followers(api, users, ListInfluencersName):
     start_time = time.time()
-
+    followers_count = 0
     for user in users:
         user_id = api.get_user(screen_name=user).id
         try:
@@ -272,8 +282,11 @@ def get_followers(api, users, ListInfluencersName):
             while True:
                 try:
                     page = next(pages)
+                    followers_count += len(page)
+                    print(time.time() - start_time, followers_count)
                     time.sleep(sleeptime)
                 except tweepy.TooManyRequests:
+                    print(time.time() - start_time, followers_count)
                     print("Wait please! ", tweepy.TooManyRequests)
                     time.sleep(60*15) 
                     page = next(pages)
@@ -777,77 +790,69 @@ def get_sentiment(selectText):
 
 def newGetTwitsEntity(users, stat_twit_count):
     start_time = time.time()
-    texts = ""
+    texts = []
     
     loop = nest_asyncio.asyncio.new_event_loop()
     nest_asyncio.asyncio.set_event_loop(loop)
     nest_asyncio.apply()
 
     for username in users:
-        current_tweets = []
         username_tweets = storage.read_tweet_text(username)
         for tweet in username_tweets:
-            current_tweets.append(tweet[0])
+            texts.append(deEmojify(tweet[0]))
+            # print('twitter.py newGetTwitsEntity() texts ', texts)
 
-        if (0 < len(current_tweets)) and (len(texts) < 1000000):    
-            texts = texts + "\n".join(current_tweets)
-        else:
-            break
-        
-        print(username, len(current_tweets))
+        print('twitter.py newGetTwitsEntity() len(username_tweets) len(texts) ', username, len(username_tweets), len(texts))
 
     print("--- %s seconds ---" % (time.time() - start_time))
     return (getAllEntity(texts))
 
 
 def getAllEntity(texts):
-    texts = deEmojify(texts)
     all_entities = {}
 
-    if len(texts) > 1000000: 
-        texts = texts[:1000000]
+    docs = list(nlp.pipe(texts))
 
-    doc = nlp(f"{texts}")
+    for doc in docs:
+        for ent in doc.ents:
+            i = ent.label_
+            if (i != 'TIME') and (i != 'DATE') and (i != 'MONEY') and (i != "ORDINAL") and (i != "CARDINAL") and (i != "QUANTITY") and (i != "PERCENT") and (i != "LANGUAGE"):
+                mean = all_entities.get(ent.text)
+                if mean is not None:
+                    m_count = mean['count']
+                    m_sentences = mean['sentences']
+                    m_sentences_pos = mean['sentences_pos']
+                    m_sentences_neg = mean['sentences_neg']
+                    m_sentences_neutral = mean['sentences_neutral']
+                    m_tone_pos = mean['tone_pos']
+                    m_tone_neg = mean['tone_neg']
+                    m_tone_neutral = mean['tone_neutral']
+                    m_type = mean['type']
+                else:
+                    m_count = 0
+                    m_sentences = []
+                    m_sentences_pos = []
+                    m_sentences_neg = []
+                    m_sentences_neutral = []
+                    m_tone_pos = 0
+                    m_tone_neg = 0
+                    m_tone_neutral = 0
+                    m_type = ent.label_
 
-    for ent in doc.ents:
-        i = ent.label_
-        if (i != 'TIME') and (i != 'DATE') and (i != 'MONEY') and (i != "ORDINAL") and (i != "CARDINAL") and (i != "QUANTITY") and (i != "PERCENT") and (i != "LANGUAGE"):
-            mean = all_entities.get(ent.text)
-            if mean is not None:
-                m_count = mean['count']
-                m_sentences = mean['sentences']
-                m_sentences_pos = mean['sentences_pos']
-                m_sentences_neg = mean['sentences_neg']
-                m_sentences_neutral = mean['sentences_neutral']
-                m_tone_pos = mean['tone_pos']
-                m_tone_neg = mean['tone_neg']
-                m_tone_neutral = mean['tone_neutral']
-                m_type = mean['type']
-            else:
-                m_count = 0
-                m_sentences = []
-                m_sentences_pos = []
-                m_sentences_neg = []
-                m_sentences_neutral = []
-                m_tone_pos = 0
-                m_tone_neg = 0
-                m_tone_neutral = 0
-                m_type = ent.label_
-
-            m_sentences.append(ent.sent.text)
-            all_entities.update({
-                ent.text:{
-                    "count":m_count+1,
-                    "sentences":m_sentences,
-                    "sentences_pos":m_sentences_pos,
-                    "sentences_neg":m_sentences_neg,
-                    "sentences_neutral":m_sentences_neutral,
-                    "tone_pos":m_tone_pos,
-                    "tone_neg":m_tone_neg,
-                    "tone_neutral":m_tone_neutral,
-                    "type":m_type
-                }
-            })
+                m_sentences.append(ent.sent.text)
+                all_entities.update({
+                    ent.text:{
+                        "count":m_count+1,
+                        "sentences":m_sentences,
+                        "sentences_pos":m_sentences_pos,
+                        "sentences_neg":m_sentences_neg,
+                        "sentences_neutral":m_sentences_neutral,
+                        "tone_pos":m_tone_pos,
+                        "tone_neg":m_tone_neg,
+                        "tone_neutral":m_tone_neutral,
+                        "type":m_type
+                    }
+                })
 
     all_entities_json = json.dumps(all_entities)
     

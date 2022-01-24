@@ -1,0 +1,5 @@
+  DEBUG: False
+  TESTING: False
+  LOGFILE: app.log
+  UPLOAD_FOLDER: doc_templates
+  RESULT_FOLDER: results

@@ -15,7 +15,7 @@ statUpdate = function() {
     $("#stat_followers_count").html(countt)
     $("#stat_acc_count").html(sizze)
 
-    $('#stat_loadtime_count').html(sec2time(countt * 0.2))
+    $('#stat_loadtime_count').html(sec2time(countt * 0.013646371))
     // aa = now + dd
     // $('#stat_loadtime_count').html(aa.toLocaleString("ru", options))
 
