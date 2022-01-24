@@ -1,5 +1,8 @@
 var rectangle = null;
 function initMap() {
+  $('#start_tweet').val(parseInt(0))
+  $('#end_tweet').val(parseInt(20))
+
     var map = new google.maps.Map(document.getElementById('map'), {
       center: {lat: 41.391771, lng: -73.962449}, 
       zoom: 15,

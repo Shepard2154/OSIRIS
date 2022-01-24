@@ -14,25 +14,15 @@ addGeofenceTwit = function (person) {
     type = "Retweet"
 
   }
-  // alert(person['hashtags'])
   sze = Object.keys(person['hashtags']).length
-  // alert(sze)
   hashtags = "<span></span>"
   if (sze > 0) {
-    // $("#geofenceBoard").html("")
-
     for (var i = 0; i < sze; i++) {
       hashtags = hashtags + `<span style="text-align: center; /*! display: inline-table; */ padding: 3px; width: max-content; visibility:view;margin: 2px;" class="shadow-inner inline-flex justify-center
       items-baseline text-sm mr-2 rounded text-white bg-teal-600">${person['hashtags'][i]}</span>`;
-      // alert('oke__________ke')
     }
-    // $('#untilTwitsToBoard').val(msg.TwitsToBoard[sizze-1]['created_at'])
   }
-  // alert(hashtags)
 
-
-
-  //vertical-align: middle; width: min-content;
   const markup = `
     <div id="sdf" class="p-2 lg:w-full">
       <div class="flex flex-row shadow rounded text-gray-800 p-2
@@ -55,7 +45,7 @@ addGeofenceTwit = function (person) {
                   href="${person['link']}"
                   rel="noopener noreferrer" target="_blank"><time
                     class="hover:text-brand" datetime="">${person['date']}</time></a></span></div>
-            <p style="font-style: italic;">${person['translate']}</p>
+            <p style="font-style: italic;">${person['text']}</p>
             <div aria-describedby="tooltip:10" data-reach-tooltip-trigger="" class="flex flex-row mr-3"><span class="text-gray-500
               ">Лайки:</span><a id="" class=" mr-3 text-brand font-semibold 
               hover:text-brand-dark" name="" rel="noopener noreferrer" target="_blank">${person['nlikes']}</a><span class="text-gray-500

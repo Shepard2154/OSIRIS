@@ -2,15 +2,19 @@ import calendar
 import json
 import sqlite3
 import time
+import re
 from collections import Counter
 from datetime import datetime
 from io import StringIO
 from urllib.parse import urlparse
 
+import ast
 import en_core_web_sm
 import nest_asyncio
 import pandas as pd
+import pymorphy2
 import tweepy
+from SimpleDecision.sentimental import Sentimental
 
 import getters
 import storage
@@ -99,24 +103,22 @@ def get_last_tweets(api, screen_name, count=200):
 
 def get_next_tweets(api, screen_name):
     all_tweets = []
-
+    tweets = []
     oldest_id = storage.read_last_tweet(screen_name)[0][0]
+    print('twitter.py get_next_tweets() ', oldest_id)
+    try:
+        tweets = api.user_timeline(screen_name=screen_name, count=200, max_id=oldest_id-1, tweet_mode = 'extended')
+        for tt in tweets:
+            print('twitter.py get_next_tweets() ', tt.id, tt.full_text[:10])
+        print()
+    except tweepy.errors.Unauthorized:
+        pass
 
-    tweets = None
-    while True:
-        try:
-            tweets = api.user_timeline(screen_name=screen_name, count=200, max_id=oldest_id-1, tweet_mode = 'extended')
-        except tweepy.errors.Unauthorized:
-            pass
-    
-        if tweets != None:
-            if len(tweets) == 0:
-                return ({"status_code": 404})
-        
-        all_tweets.extend(tweets)
-        
-        if len(all_tweets) == 200:
-            break 
+    if len(tweets) == 0:
+        print('twitter.py get_next_tweets() ', tweets)
+        return ({"status_code": 404})
+
+    all_tweets.extend(tweets)
 
     for tweet in all_tweets:
         quote_screen_name = ''
@@ -130,7 +132,7 @@ def get_next_tweets(api, screen_name):
 
         storage.create_tweet(tweet, quote_screen_name=quote_screen_name, retweete_screen_name=retweete_screen_name)
 
-    print(tweets[0].id)
+    print(storage.read_last_tweet(screen_name)[0][0])
     return ({"status_code": 200})
 
 
@@ -189,24 +191,6 @@ def get_tweet_time_weekday(data):
         else:
             weekdays[str(calendar.day_name[datetime.strptime(item, "%Y-%m-%d %H:%M:%S%z").weekday()])] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0]
     return weekdays
-
-
-nlp = nlp = en_core_web_sm.load()
-from SimpleDecision.sentimental import Sentimental
-sent = Sentimental()
-import re
-import pymorphy2
-morph = pymorphy2.MorphAnalyzer()
-
-def get_sentiment(selectText):
-    words = [morph.parse(word)[0].normal_form for word in re.findall(r'\w+', selectText)]
-    sentence = " ".join(words)
-    result = sent.analyze(sentence)
-    return(result)
-
-loop = nest_asyncio.asyncio.new_event_loop()
-nest_asyncio.asyncio.set_event_loop(loop)
-nest_asyncio.apply()
 
 
 def followersCross(ListInfluencersName, cross_count=1):
@@ -645,12 +629,13 @@ def get_tweet_retweet_screen_name(screen_name):
 
 
 def getGeofenceTwits(center=None, radius=None, keyword='*'):
+    storage.delete_all_geotweets()
+
     geo=f'{center[0]},{center[1]},{radius}km'
     print(geo)
     COLS = ['id', 'username', 'text', 'date', 'link', 'translate', 'nlikes', 'place', 'nretweets', 'nreplies','retweet', 'hashtags', 'name']
 
     df = pd.DataFrame(columns=COLS)
-    twits = []
 
     for page in tweepy.Cursor(api.search_tweets, q=keyword,geocode=geo).pages():
         for tweet in page:
@@ -671,8 +656,8 @@ def getGeofenceTwits(center=None, radius=None, keyword='*'):
                 place = tweet['place']['name']
             except TypeError:
                 place = 'no place'
-            new_entry.append(place)
 
+            new_entry.append(place)
             new_entry.append(tweet['retweet_count'])
             new_entry.append(tweet['is_quote_status'])
 
@@ -692,12 +677,14 @@ def getGeofenceTwits(center=None, radius=None, keyword='*'):
             df = df.append(single_tweet_df, ignore_index=True)
             print(df)
 
-            twits.append({
-                "username": new_entry[1],
-                'text': new_entry[2], 
+            storage.create_geotweet(
+                {  
+                'id': new_entry[0],
+                'username': new_entry[1],
+                'translate': new_entry[2], 
                 'date': new_entry[3], 
                 'link': new_entry[4], 
-                'translate': new_entry[5], 
+                'text': new_entry[5], 
                 'nlikes': new_entry[6], 
                 'place': new_entry[7], 
                 'nretweets': new_entry[8], 
@@ -705,21 +692,97 @@ def getGeofenceTwits(center=None, radius=None, keyword='*'):
                 'retweet': new_entry[10], 
                 'hashtags': new_entry[11],
                 'name': tweet['user']['name']
-            }) 
-            if len(df) == 100:
-                break
+            }
+            )
 
-        if len(df) == 100:
-                break
-    return ({"status_code":200,"twits":twits})
+    geotweets = storage.read_all_geotweets()[:20]
+    twits = []
+
+    for tweet in geotweets:
+        hashtags = ast.literal_eval(tweet[10])
+
+        new_tweet = {
+            'id': tweet[0],
+            'text': tweet[1],
+            'date': tweet[2],
+            'link': tweet[3],
+            'translate': tweet[4],
+            'nlikes': tweet[5],
+            'place': tweet[6],
+            'nretweets': tweet[7],
+            'nreplies': tweet[8],
+            'retweet': tweet[9],
+            'hashtags': hashtags,
+            'username': tweet[11],
+            'name': tweet[12],
+        }
+        twits.append(new_tweet)
+
+    return ({"status_code": 200, "twits": twits})
+
+
+def getGeoTweets(start_tweet, end_tweet):
+    start_tweet = int(start_tweet)
+    end_tweet = int(end_tweet)
+
+    geotweets = storage.read_all_geotweets()
+    twits = []
+
+    if start_tweet >= len(geotweets):
+        return({'twits': [], 'status_code': 200})
+
+    for tweet in geotweets[start_tweet:end_tweet]:
+        hashtags = ast.literal_eval(tweet[10])
+
+        new_tweet = {
+            'id': tweet[0],
+            'text': tweet[1],
+            'date': tweet[2],
+            'link': tweet[3],
+            'translate': tweet[4],
+            'nlikes': tweet[5],
+            'place': tweet[6],
+            'nretweets': tweet[7],
+            'nreplies': tweet[8],
+            'retweet': tweet[9],
+            'hashtags': hashtags,
+            'username': tweet[11],
+            'name': tweet[12],
+        }
+        twits.append(new_tweet)
+
+    return ({"status_code": 200, "twits": twits})
+
+
+
+# Функции для страницы с выявлением НК
+
+nlp = en_core_web_sm.load()
+
+sent = Sentimental()
+
+morph = pymorphy2.MorphAnalyzer()
+
+loop = nest_asyncio.asyncio.new_event_loop()
+nest_asyncio.asyncio.set_event_loop(loop)
+nest_asyncio.apply()
+
+
+def get_sentiment(selectText):
+    words = [morph.parse(word)[0].normal_form for word in re.findall(r'\w+', selectText)]
+    sentence = " ".join(words)
+    result = sent.analyze(sentence)
+    return(result)
 
 
 def newGetTwitsEntity(users, stat_twit_count):
     start_time = time.time()
     texts = ""
+    
     loop = nest_asyncio.asyncio.new_event_loop()
     nest_asyncio.asyncio.set_event_loop(loop)
     nest_asyncio.apply()
+
     for username in users:
         current_tweets = []
         username_tweets = storage.read_tweet_text(username)
@@ -732,16 +795,20 @@ def newGetTwitsEntity(users, stat_twit_count):
             break
         
         print(username, len(current_tweets))
+
     print("--- %s seconds ---" % (time.time() - start_time))
-    return(getAllEntity(texts))
+    return (getAllEntity(texts))
 
 
 def getAllEntity(texts):
     texts = deEmojify(texts)
     all_entities = {}
+
     if len(texts) > 1000000: 
         texts = texts[:1000000]
+
     doc = nlp(f"{texts}")
+
     for ent in doc.ents:
         i = ent.label_
         if (i != 'TIME') and (i != 'DATE') and (i != 'MONEY') and (i != "ORDINAL") and (i != "CARDINAL") and (i != "QUANTITY") and (i != "PERCENT") and (i != "LANGUAGE"):
@@ -766,6 +833,7 @@ def getAllEntity(texts):
                 m_tone_neg = 0
                 m_tone_neutral = 0
                 m_type = ent.label_
+
             m_sentences.append(ent.sent.text)
             all_entities.update({
                 ent.text:{

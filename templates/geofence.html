@@ -867,6 +867,10 @@ height: 100%;
                     md:items-start">
                   </div>
                 </div>
+                <button
+                    onclick="uploadGeoTweets()"
+                    class="hover:bg-brand-dark px-4 py-2 bg-brand text-gray-100
+                    rounded" type="button">Показать ещё</button>
               </section>
             </div>
           </div>
@@ -915,12 +919,13 @@ height: 100%;
                 </div>
               </nav>
             </div>
+            <input id="start_tweet" value="0" hidden>
+            <input id="end_tweet" value="20" hidden>
           </footer>
         </main>
         <div id="modals"></div>
         <div id="portal"></div>
         <div id="tip"></div>
-        <script></script>
         <div class="d3-tip n"
           style="position: absolute; top: -999px; opacity: 0; pointer-events:
           none;
@@ -948,8 +953,8 @@ height: 100%;
         <!--===============================================================================================-->
         <!--===============================================================================================-->
         <script src="../static/js/addGeofenceTwit.js"></script>
-
         <!--===============================================================================================-->
+        <script src="../static/js/uploadGeoTweets.js"></script>
 
       </body>
 

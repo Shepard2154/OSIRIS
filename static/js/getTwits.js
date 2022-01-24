@@ -16,6 +16,8 @@ getTwits = function () {
             },
             error: function(msg) {
                 alert('bad request')
+                $("#overlay").fadeOut(300);
+                enableScroll()
             },
             beforeSend: function(){
               $("#overlay").fadeIn(300);

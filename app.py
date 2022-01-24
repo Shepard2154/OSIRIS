@@ -297,8 +297,7 @@ def getTwitss():
     except:
         logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
         return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
-    # twits = twitter.get_all_tweets(api, twitterAccountName, since, until)
-    twits = twitter.get_next_tweets(api, twitterAccountName)
+    twits = twitter.get_all_tweets(api, twitterAccountName, since, until)
     if twits['status_code'] != 200:
         logger.error({"error": "Twits not found"})
         return make_response(jsonify({"_status_code": 404, "error": "Twits not found"}), 404)
@@ -455,6 +454,29 @@ def downloadFullFollowers():
         return make_response(jsonify({"_status_code": 404, "error": "There are not users"}), 404)
 
 
+@app.route('/uploadGeoTweets/', methods=['POST', 'OPTIONS', 'GET'])
+def uploadGeoTweets():
+    try:
+        start_tweet = json.loads(request.data.decode('utf-8'))['start_tweet']
+        end_tweet = json.loads(request.data.decode('utf-8'))['end_tweet']
+
+        print('app.py uploadGeoTweets()', start_tweet, end_tweet)
+    except:
+        logger.error('"_status_code": 422, "error": ["info":"incorrect POST-request"]')
+        return make_response(jsonify({"_status_code": 422, "error": {"info": "incorrect POST-request"}}), 422)
+
+    geo_tweets = twitter.getGeoTweets(start_tweet, end_tweet)
+
+    if geo_tweets['status_code'] != 200:
+            logger.error({"error": "result not found"})
+            return make_response(jsonify({"_status_code": 422, "error": "geotweets did not find"}), 422)
+    else: 
+        if len(geo_tweets.get('twits')) != 0:
+            return  make_response(jsonify({"_status_code": 200, "twits": geo_tweets.get('twits')}), 200)
+        else:
+            return make_response(jsonify({"_status_code": 404, "error": "There are not geotweets"}), 404)
+
+
 @app.route('/statTimeUpdate/',methods=['POST','OPTIONS','GET'])
 def statTimeUpdate():
     try:
@@ -482,7 +504,6 @@ def addGeofenceOnBoard():
     except:
         logger.error('"_status_code":422,"error": ["info":"incorrect POST-request"]')
         return make_response(jsonify({"_status_code":422,"error":{"info":"incorrect POST-request"}}),422)
-    print(center, type(center))
 
     center = center.replace('(', '').replace(')', '').replace(' ', '').split(',')
     twits = getGeofenceTwits(center=center,radius=radius)
@@ -490,7 +511,7 @@ def addGeofenceOnBoard():
         logger.error({"error": "Twits not found"})
         return make_response(jsonify({"_status_code":404,"error":"Twits not found"}),404)
     else:
-        return make_response(jsonify({"status_code":200,"twits":twits['twits']}),200) #twits['twits']
+        return make_response(jsonify({"status_code":200,"twits":twits['twits']}),200)
 
 
 @app.route('/addListCa/',methods=['POST','OPTIONS','GET'])

@@ -19,7 +19,8 @@ addDopMessage = function () {
                 }
             },
             error: function(msg) {
-                alert('bad request')
+                if (msg.responseJSON.error == "TwitsToBoard not found") alert('Твиты не найдены! Вы анализировали пользователя через Персоны?')
+                else alert('bad request')
             },
             beforeSend: function(){
               $("#overlay").fadeIn(300);

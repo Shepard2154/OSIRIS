@@ -94,6 +94,27 @@ def init():
                 CONSTRAINT users_pk PRIMARY KEY (screen_name)
             );
     """ 
+
+    query = """
+    CREATE TABLE IF NOT EXISTS
+            geofencing (
+                id integer not null,
+                text text default '',
+                date text not null,
+                link text default '',
+                translate text default '',
+                nlikes integer not null,
+                place text default '',
+                nretweets integer not null,
+                nreplies integer not null,
+                retweet bool not null,
+                hashtags text default '',
+                username text default '',
+                name text default '',
+                CONSTRAINT geo_pk PRIMARY KEY (id)
+            );
+    """
+
     cursor.execute(query)
     connection.commit()
     return 1
@@ -125,6 +146,32 @@ def create_user(user):
             '{user.get('time_update')}'
         )
     """
+    cursor.execute(query)
+    connection.commit()
+
+
+def create_geotweet(tweet):
+    connection = sqlite3.connect(TWITTER_DB)
+    cursor = connection.cursor()
+    query = f"""
+        INSERT OR REPLACE INTO geofencing 
+        VALUES (
+            {tweet.get('id')},
+            "{tweet.get('text').replace('"', "'")}",
+            "{tweet.get('date').replace('"', "'")}",
+            "{tweet.get('link').replace('"', "'")}",
+            "{tweet.get('translate').replace('"', "'")}",
+            {tweet.get('nlikes')},
+            "{tweet.get('place').replace('"', "'")}",
+            {tweet.get('nretweets')},
+            {tweet.get('nreplies')},
+            "{tweet.get('retweet')}",
+            "{tweet.get('hashtags')}",
+            "{tweet.get('username').replace('"', '')}",
+            "{tweet.get('name').replace('"', "'")}"
+            )
+    """
+    print(query)
     cursor.execute(query)
     connection.commit()
 
@@ -240,7 +287,7 @@ def read_last_tweet(screen_name):
     connection = sqlite3.connect(TWITTER_DB)
     cursor = connection.cursor()
     query = f"""
-    SELECT MAX(id) FROM tweet WHERE screen_name='{screen_name}'
+    SELECT MIN(id) FROM tweet WHERE screen_name='{screen_name}'
     """
     cursor.execute(query)
     data = cursor.fetchall()
@@ -488,3 +535,26 @@ def read_tweets_count(screen_name):
     data = cursor.fetchall()
     connection.commit()
     return data
+
+
+def read_all_geotweets():
+    connection = sqlite3.connect(TWITTER_DB)
+    cursor = connection.cursor()
+    query = f'''
+        SELECT * 
+        FROM geofencing
+    '''
+    cursor.execute(query)
+    data = cursor.fetchall()
+    connection.commit()
+    return data
+
+
+def delete_all_geotweets():
+    connection = sqlite3.connect(TWITTER_DB)
+    cursor = connection.cursor()
+    query = f'''
+        DELETE FROM geofencing
+    '''
+    cursor.execute(query)
+    connection.commit()
