@@ -22,6 +22,22 @@ consumer_secret = 'PCSFhTShUoKzASdExZh5pz54nP1v4uo0KheBotPpZUUoQ3r1sV'
 access_key = '2308267840-G9kog927ZlVhGvoUsXbIt16ZQLk0eUkeuteieA6'
 access_secret = '6ZW7GNAZTG6tW4YXYShawMgGbv5ri4kfZvgDF1UAbSb4a'
 
+#Конвертация id в screen_name и обратно
+def convertation(id_or_screen_name):
+  if type(id_or_screen_name) == int:
+    info = api.get_user(id)
+    result = info.screen_name
+  else:
+    info = api.get_user(screen_name)
+    result = info.id_str
+  return(result)
+
+def get_api():
+      auth=tweepy.OAuthHandler(consumer_key, consumer_secret)
+      auth.set_access_token(access_key, access_secret)
+      api = tweepy.API(auth, wait_on_rate_limit=True)
+      return api
+
 class Comments():
   def get_n_tweets(USER, n_tweets):
     us = pd.DataFrame(itertools.islice(sntwitter.TwitterSearchScraper(f'from:{USER} include:nativeretweets').get_items(), n_tweets))
@@ -39,15 +55,11 @@ class Comments():
 
   def get_tweet(url):
       tweet_id = url.split('/')[-1]
-      api = Comments.get_api()
+      api = get_api()
       tweet = api.get_status(tweet_id)
       return tweet
 
-  def get_api():
-      auth=tweepy.OAuthHandler(consumer_key, consumer_secret)
-      auth.set_access_token(access_key, access_secret)
-      api = tweepy.API(auth, wait_on_rate_limit=True)
-      return api
+  
 
   def table(comment_urls):
     d = []
