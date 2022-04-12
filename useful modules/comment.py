@@ -49,7 +49,7 @@ class Comments():
     comment_df = pd.DataFrame()
     new_df = pd.DataFrame()
     for i in n_tweet_ids:
-      comment_df = pd.DataFrame(itertools.islice(sntwitter.TwitterSearchScraper(f'to:{USER} since_id:{i}').get_items(), 100)) #filter:replies
+      comment_df = pd.DataFrame(itertools.islice(sntwitter.TwitterSearchScraper(f'to:{USER} since_id:{i}').get_items(), n_tweet_ids)) #filter:replies
       new_df = pd.concat([new_df, comment_df], ignore_index=True)
     return(new_df)
 
