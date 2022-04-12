@@ -9,6 +9,8 @@ import re
 import os
 import json
 
+import datetime as DT
+
 proxy='http://dtiBPkKp:iX4U87RK@45.132.51.236:49044'
 os.environ['http_proxy'] = proxy 
 os.environ['HTTP_PROXY'] = proxy
@@ -55,15 +57,58 @@ class Comments():
       d_1 = pd.DataFrame(d)
     return(d_1)
 
-# сбор N-твиттов включая ретвитты
-USER = input('Введите имя ')
-n_tweets = int(input('Введите количество твиттов '))
-def comments_to_dict(USER, n_tweets):
-  gnt= Comments.get_n_tweets(USER, n_tweets)
-  nctt = Comments.n_comments_to_tweet(USER, gnt.id)
-  t = Comments.table(nctt.url)
-  all = nctt.join(t).to_dict()
-  return(all)
-  
-p = comments_to_dict(USER, n_tweets)
-print(p)  
+#Собирает все комментарии пользователя согласно запросу
+  # since - с (включительно) указанной даты по настоящий момент
+  # until - до (не включительно) указанной даты
+  # since-until - позволяет устанавливать промежуток
+  # n_comments - n последних комментариев
+  def get_comments(USER, mode):
+    if mode ==  'since' or mode =='until':
+      date = DT.datetime.strptime(input('Введите дату: '), '%d.%m.%Y')
+      date = date.strftime('%Y-%m-%d')
+
+    if mode == 'since':
+      try:
+        user_comments = pd.DataFrame(sntwitter.TwitterSearchScraper(f'from:{USER} filter:replies since:{date}').get_items())
+        add = Comments.table(user_comments.url)
+        all_comments = user_comments.join(add).to_dict()
+      except Exception:
+        print('Невозможно выдать запрос по данной дате!')
+        get_comments(USER, 'since')
+
+    elif mode == 'until':
+      try:
+        user_comments = pd.DataFrame(sntwitter.TwitterSearchScraper(f'from:{USER} filter:replies until:{date}').get_items())
+        add = Comments.table(user_comments.url)
+        all_comments = user_comments.join(add).to_dict()
+      except Exception:
+        print('Невозможно выдать запрос по данной дате!')
+        get_comments(USER, 'until')
+
+    elif mode == 'since-until':
+      try:
+        since = DT.datetime.strptime(input('Введите дату с которой хотите начать: '), '%d.%m.%Y')
+        since = since.strftime('%Y-%m-%d')
+        until = DT.datetime.strptime(input('Введите дату до которой хотите получить: '), '%d.%m.%Y')
+        until = until.strftime('%Y-%m-%d')
+        user_comments = pd.DataFrame(sntwitter.TwitterSearchScraper(f'from:{USER} filter:replies since:{since} until:{until}').get_items())
+        add = Comments.table(user_comments.url)
+        all_comments = user_comments.join(add).to_dict()
+      except Exception:
+        print('Невозможно выдать запрос по данной дате!')
+        get_comments(USER, 'since-until')
+
+    elif mode == 'n_comments':
+      n_comments = int(input('Введите нужное количество комментариев:'))
+      user_comments = pd.DataFrame(itertools.islice(sntwitter.TwitterSearchScraper(f'from:{USER} filter:replies').get_items(), n_comments))
+      add = Comments.table(user_comments.url)
+      all_comments = user_comments.join(add).to_dict()
+    return(all_comments)
+
+# сбор комментариев к N-твиттам (включая ретвитты) пользователя
+  def comments_to_dict(USER, n_tweets):
+    gnt= Comments.get_n_tweets(USER, n_tweets)
+    nctt = Comments.n_comments_to_tweet(USER, gnt.id)
+    t = Comments.table(nctt.url)
+    all = nctt.join(t).to_dict()
+    return(all)
