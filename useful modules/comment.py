@@ -39,11 +39,12 @@ def get_api():
       return api
 
 class Comments():
+  #Собирает n-твиттов пользователя, включая сделанные им ретвитты
   def get_n_tweets(USER, n_tweets):
     us = pd.DataFrame(itertools.islice(sntwitter.TwitterSearchScraper(f'from:{USER} include:nativeretweets').get_items(), n_tweets))
     return(us)
 
-
+  #Собирает комментарии к n-твиттам пользователей
   def n_comments_to_tweet(USER, n_tweet_ids):
     comment_df = pd.DataFrame()
     new_df = pd.DataFrame()
