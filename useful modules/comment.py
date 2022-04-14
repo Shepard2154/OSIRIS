@@ -23,12 +23,12 @@ access_key = '2308267840-G9kog927ZlVhGvoUsXbIt16ZQLk0eUkeuteieA6'
 access_secret = '6ZW7GNAZTG6tW4YXYShawMgGbv5ri4kfZvgDF1UAbSb4a'
 
 #Конвертация id в screen_name и обратно
+#Конвертация id в screen_name и обратно
 def convertation(id_or_screen_name):
+  info = api.get_user(id_or_screen_name)
   if type(id_or_screen_name) == int:
-    info = api.get_user(id_or_screen_name)
     result = info.screen_name
   else:
-    info = api.get_user(id_or_screen_name)
     result = info.id_str
   return(result)
 
